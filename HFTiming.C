@@ -15,6 +15,7 @@
 #include "TH2F.h"
 #include "TCanvas.h"
 #include "TDirectory.h"
+#include "TSystem.h"
 #include "TBranch.h"
 #include "TString.h"
 #include "TStyle.h"
@@ -32,7 +33,6 @@
 #endif
 
 TString fc_thresh = "100";
-
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/HCAL/HFTiming/FC"+fc_thresh+"/";
 
 // Runs before calibration: 254231, 254232
@@ -439,8 +439,11 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 void HFTiming() 
 { 
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
+
+  int dir = gSystem->mkdir(outdir,true);
+  if(dir==0) cout<<"Created directory: "<<outdir<<endl;
+  else if(dir==-1) cout<<"Directory "<<outdir<<" already exists"<<endl;
   
   HFTimingOne(2, 1, 41, 3, 2);
   HFTimingOne(2, 1, -41, 3, 2);
-  
 }
