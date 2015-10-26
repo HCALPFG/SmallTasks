@@ -22,6 +22,8 @@
 #include "TLatex.h"
 #include "TProfile.h"
 
+#include <TError.h>
+
 // In order to use vector of vectors : vector<vector<data type> >
 // ACLiC makes dictionary for this
 // [ref] http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=10236&p=44117#p44117
@@ -29,18 +31,31 @@
 #pragma link C++ class std::vector < std::vector<float> >+;
 #endif
 
-int Nrun=45;
-int run[45]={254231,254232,254790,254852,254879,254906,254907,254914,  // 2015C
-             256630,256673,256674,256675,256676,256677,256801,256842,
-             256843,256866,256867,256868,256869,256926,256941,257461,
-             257531,257599,257613,257614,257645,257682,257722,257723,
-             257735,257751,257804,257805,257816,257819,257968,257969,
-             258129,258136,258157,258158,258159};
+TString fc_thresh = "100";
+
+TString outdir ="/afs/cern.ch/user/r/rbhandar/www/HCAL/HFTiming/FC"+fc_thresh+"/";
+
+// Runs before calibration: 254231, 254232
+// Runs with no entries: 256673, 25674, 256842, 258655
+// Runs with <=11 entries for either channel: 256866, 256869, 257614, 257804, 258129, 258136, 258714, 258741
+// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448.
+
+vector<int> run  = { 254790,254852,254879,254906,254907,254914,  // 2015C
+		     256630,256675,256676,256677,256801,
+		     256843,256867,256868,256926,256941,257461,
+		     257531,257599,257613,257645,257682,257722,257723,
+		     257735,257751,257805,257816,257819,257968,257969,
+		     258157,258158,258159,258177,258656,
+		     258694,258702,258703,258705,258706,258712,258713,
+		     258742,258745,258749,258750 };
+
+const int Nrun=run.size();
+
 
 //int Ethres[4]={5,1000,1001,1002};
 //int HistColor[4]={kBlack,kBlack,kBlack,kBlack};
 //int Ethres[4]={5,10,15,20};
-int Ethres[4]={50,100000,1000001,1000002};
+int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
 
@@ -80,8 +95,10 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TStrin
 void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=999, int DEPTH=999)
 { 
     TChain ch("hcalTupleTree/tree");
-    ch.Add("~/public/JetHT_Run2015C-v1_RAW/*.root"); 
-    ch.Add("~/public/JetHT_Run2015D-v1_RAW/*.root"); 
+    ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
+    ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
+    ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
+    
 
     // 
     // Branches 
@@ -160,15 +177,27 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
         ch.GetEntry(ievent); 
     
         // Status
-        if((ievent%100000)==0) cout << "[HF Timing] Event: " << ievent << " / " << nentries << "(" << (int)((float)ievent/(float)nentries*100) << "%)" << endl;
-
+        if((ievent%100000)==0){
+          if (isatty(1)) {
+            printf("\r[HF Timing] Event: %i / %i (%i%%)",ievent,nentries,(int)((float)ievent/(float)nentries*100));
+            fflush(stdout);
+            if(ievent==nentries-1) printf("\n");
+          }
+        }        
+	
         // Choose isolated bunch crossing
-        if( run_==254231                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
-        if( run_==254232                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
-        if( run_==254790                    && bx_!=1   && bx_!=61   && bx_!=141    ) continue;
-        if( run_==254852                    && bx_!=39  && bx_!=91   && bx_!=141    ) continue;
-        if((run_>=254879 && run_<=254914)   && bx_!=39  && bx_!=91                  ) continue;
-        if( run_>=256630                    && bx_!=39                              ) continue;
+	if( run_==254231                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
+	if( run_==254232                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
+	if( run_==254790                    && bx_!=1   && bx_!=61   && bx_!=141    ) continue;
+	if( run_==254852                    && bx_!=39  && bx_!=91   && bx_!=141    ) continue;
+	if((run_>=254879 && run_<=254914)   && bx_!=39  && bx_!=91                  ) continue;
+	if((run_>=256630 && run_<=258159)   && bx_!=39                              ) continue;
+	if( run_==258177                    && bx_!=39                              ) continue; //WBM weird
+	if((run_>=258655 && run_<=258656)   && bx_!=20                              ) continue; //WBM weird
+	if( run_==258694                    && bx_!=20                              ) continue; //WBM weird
+	if((run_>=258702 && run_<=258714)   && bx_!=20                              ) continue; //WBM weird
+	if((run_>=258741 && run_<=258750)   && bx_!=20                              ) continue; //WBM weird
+
 
         // loop over channels
         for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
@@ -197,6 +226,23 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
                 // Filling histogram
                 //
                 
+		// Empty runs
+		if(run_==254231) continue;
+		if(run_==254232) continue;
+		if((run_>=256673 && run_<=256674)) continue;
+		if(run_==256842) continue;
+		if(run_==258655) continue;
+		if((run_>=258211 && run_<=258448)) continue;
+		if(run_==256866) continue;
+		if(run_==256869) continue;
+		if(run_==257614) continue;
+		if(run_==257804) continue;
+		if(run_==258129) continue;
+		if(run_==258136) continue;
+		if(run_==258714) continue;
+		if(run_==258741) continue;
+
+
                 // Get irun   
                 int ithisrun=-1;
                 for(int irun=0; irun<Nrun; irun++) if(run_==run[irun]) ithisrun = irun; 
@@ -323,14 +369,17 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
         cout << Form("RUN=%i IETA=%i IPHI=%i DEPTH=%i",run[irun],IETA,IPHI,DEPTH) << endl;
         cout << "Peak : " << havgtime[irun][0]->GetMean() << " +/- " << havgtime[irun][0]->GetRMS()<< endl;
 
-        c->Print(Form("/afs/cern.ch/user/j/jaehyeok/www/HCAL/HFTiming/ForTimeX/RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
-        //c->Print(Form("/afs/cern.ch/user/j/jaehyeok/www/HCAL/HFTiming/ForTimeX/RUN%i_IETA%i_IPHI%i_DEPTH%i.C",run[irun],IETA,IPHI,DEPTH));
-
+        c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+        //c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.C",run[irun],IETA,IPHI,DEPTH));
+	delete c;
         
         TCanvas *cprofile = new TCanvas("cprofile", "cprofile", 600, 400);
         cprofile->cd(1);
         h2profile[irun][0]->Draw();
-        cprofile->Print(Form("/afs/cern.ch/user/j/jaehyeok/www/HCAL/HFTiming/ForTimeX/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+	if(h2profile[irun][0]->GetEntries()<=11) cout<<"Low stats: Run = "<<run[irun]<<endl;
+        cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+	
+	delete cprofile;
     }
 
     //
@@ -342,21 +391,29 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
         hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
         hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
         //hsummary->SetBinError(irun+1,0);  
-        hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",run[irun]));  
-        hsummary->GetXaxis()->SetLabelSize(0.07);  
-        hsummary->SetStats(0);  
-        hsummary->SetTitle("");  
+        hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-250000)));  
+        hsummary->GetXaxis()->SetLabelSize(0.06);  
+	hsummary->GetXaxis()->LabelsOption("v");
+	hsummary->GetYaxis()->SetTitle("<Q2/(Q1+Q2)>");
+	hsummary->GetYaxis()->SetTitleSize(0.06);
+	hsummary->GetYaxis()->SetTitleOffset(0.8);
+        hsummary->GetYaxis()->SetLabelSize(0.06);  
+        hsummary->SetStats(0);
+	hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));
+
     } 
     TCanvas *csum = new TCanvas("csum", "csum", 800, 400);
     csum->cd(1);
+    csum->SetGridy(1);
     hsummary->SetMinimum(0);
     hsummary->SetMaximum(1);
     hsummary->SetMarkerStyle(20);
     hsummary->SetMarkerSize(1);
     hsummary->Draw("ep");
-    csum->Print(Form("/afs/cern.ch/user/j/jaehyeok/www/HCAL/HFTiming/ForTimeX/Summary_IETA%i_IPHI%i_DEPTH%i.pdf",IETA,IPHI,DEPTH));
-    csum->Print(Form("/afs/cern.ch/user/j/jaehyeok/www/HCAL/HFTiming/ForTimeX/Summary_IETA%i_IPHI%i_DEPTH%i.C",IETA,IPHI,DEPTH));
+    csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.pdf",IETA,IPHI,DEPTH));
+    csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.root",IETA,IPHI,DEPTH));
 
+    delete csum;
     //
     // clean 
     //
@@ -381,8 +438,9 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 //
 void HFTiming() 
 { 
-
-    HFTimingOne(2, 1, 41, 3, 2);
-    HFTimingOne(2, 1, -41, 3, 2);
+  gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
+  
+  HFTimingOne(2, 1, 41, 3, 2);
+  HFTimingOne(2, 1, -41, 3, 2);
   
 }
