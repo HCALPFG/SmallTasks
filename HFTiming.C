@@ -32,22 +32,31 @@
 #pragma link C++ class std::vector < std::vector<float> >+;
 #endif
 
-TString fc_thresh = "100";
-TString outdir ="/afs/cern.ch/user/r/rbhandar/www/HCAL/HFTiming/FC"+fc_thresh+"/";
+TString fc_thresh = "50";
+TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/totem/fc"+fc_thresh+"/";
 
 // Runs before calibration: 254231, 254232
 // Runs with no entries: 256673, 25674, 256842, 258655
 // Runs with <=11 entries for either channel: 256866, 256869, 257614, 257804, 258129, 258136, 258714, 258741
-// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448.
+// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448, 259637.
 
 vector<int> run  = { 254790,254852,254879,254906,254907,254914,  // 2015C
-		     256630,256675,256676,256677,256801,
-		     256843,256867,256868,256926,256941,257461,
-		     257531,257599,257613,257645,257682,257722,257723,
-		     257735,257751,257805,257816,257819,257968,257969,
-		     258157,258158,258159,258177,258656,
-		     258694,258702,258703,258705,258706,258712,258713,
-		     258742,258745,258749,258750 };
+		     256630,256675,256676,256677,256801,256843,  // 2015D
+		     256867,256868,256926,256941,257461,257531,
+		     257599,257613,257645,257682,257722,257723,
+		     257735,257751,257805,257816,257819,257968,
+		     257969,258157,258158,258159,258177,258656,
+		     258694,258702,258703,258705,258706,258712,
+		     258713,258742,258745,258749,258750,
+		     
+		     259152,259157,259158,259159,259161,259162,259163, // Totem Runs
+		     259164,259167,259199,259200,259201,259207,259208,
+		     259236,259237,259351,259352,259384,259385,259388,
+		     259399,259429,259431,
+
+		     259626,259637,259681,259683,259685,259686,259721, //2015D
+		     259809,259810,259811,259813,259817,259818,259820,
+		     259821,259822,259862,259890,259891};
 
 const int Nrun=run.size();
 
@@ -98,6 +107,8 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
     ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
     ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
+    ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
+    ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
     
 
     // 
@@ -198,6 +209,14 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 	if((run_>=258702 && run_<=258714)   && bx_!=20                              ) continue; //WBM weird
 	if((run_>=258741 && run_<=258750)   && bx_!=20                              ) continue; //WBM weird
 
+	if((run_>=259152 && run_<=259431)   && bx_==-1                              ) continue; // Totem runs
+	
+	if( run_==259626                    && bx_!=1                               ) continue; 
+	if((run_>=259681 && run_<=259686)   && bx_!=20                              ) continue;
+	if( run_==259721                    && bx_!=1                               ) continue;
+	if((run_>=259809 && run_<=259822)   && bx_!=20                              ) continue;
+	if( run_==259862                    && bx_!=20                              ) continue;
+	if((run_>=259890 && run_<=259891)   && bx_!=20                              ) continue;
 
         // loop over channels
         for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
