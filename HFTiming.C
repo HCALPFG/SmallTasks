@@ -98,6 +98,22 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TStrin
     h2->SetStats(0);
 }
 
+void makeTextFile(TH1F* timing[][4], int ieta){
+
+  TString name = "HFp_Timing";
+  if(ieta<0) name = "HFm_Timing";
+  name += ".txt";
+
+  ofstream file(outdir+name);
+  for(int i=0; i<Nrun; i++){
+    //run declared up top
+    file<<run[i]<<", "<<timing[i][0]->GetMean()<<", "<<timing[i][0]->GetMeanError()<<endl;
+  }
+  file.close();
+
+  cout<<"Written "<<outdir+name<<endl;
+}
+
 //
 //
 //
@@ -433,6 +449,9 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.root",IETA,IPHI,DEPTH));
 
     delete csum;
+
+    makeTextFile(h2over12,IETA);
+
     //
     // clean 
     //
@@ -457,6 +476,7 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 //
 void HFTiming() 
 { 
+  gROOT->SetBatch(true);  //Don't show canvases
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
 
   int dir = gSystem->mkdir(outdir,true);
