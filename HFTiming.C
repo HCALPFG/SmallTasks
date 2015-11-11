@@ -33,12 +33,12 @@
 #endif
 
 TString fc_thresh = "50";
-TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/totem/fc"+fc_thresh+"/";
+TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/fc"+fc_thresh+"/";
 
 // Runs before calibration: 254231, 254232
 // Runs with no entries: 256673, 25674, 256842, 258655
 // Runs with <=11 entries for either channel: 256866, 256869, 257614, 257804, 258129, 258136, 258714, 258741
-// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448, 259637.
+// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448, 259637, 260425, 260426.
 
 vector<int> run  = { 254790,254852,254879,254906,254907,254914,  // 2015C
 		     256630,256675,256676,256677,256801,256843,  // 2015D
@@ -56,15 +56,13 @@ vector<int> run  = { 254790,254852,254879,254906,254907,254914,  // 2015C
 
 		     259626,259637,259681,259683,259685,259686,259721, //2015D
 		     259809,259810,259811,259813,259817,259818,259820,
-		     259821,259822,259862,259890,259891};
+		     259821,259822,259862,259890,259891,260373};
 
 const int Nrun=run.size();
 
 
-//int Ethres[4]={5,1000,1001,1002};
-//int HistColor[4]={kBlack,kBlack,kBlack,kBlack};
-//int Ethres[4]={5,10,15,20};
 int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
+//int Ethres[4]={0,50,100,150};
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
 
@@ -111,7 +109,7 @@ void makeTextFile(TH1F* timing[][4], int ieta){
   }
   file.close();
 
-  cout<<"Written "<<outdir+name<<endl;
+  cout<<"Written to "<<outdir+name<<endl;
 }
 
 //
@@ -125,6 +123,7 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     ch.Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
     ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
     ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
+    ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
     
 
     // 
@@ -233,6 +232,7 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 	if((run_>=259809 && run_<=259822)   && bx_!=20                              ) continue;
 	if( run_==259862                    && bx_!=20                              ) continue;
 	if((run_>=259890 && run_<=259891)   && bx_!=20                              ) continue;
+	if( run_==260373                    && bx_!=1                               ) continue;       
 
         // loop over channels
         for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
@@ -437,7 +437,7 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 	hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));
 
     } 
-    TCanvas *csum = new TCanvas("csum", "csum", 800, 400);
+    TCanvas *csum = new TCanvas("csum", "csum", 1200, 400);
     csum->cd(1);
     csum->SetGridy(1);
     hsummary->SetMinimum(0);
@@ -481,7 +481,7 @@ void HFTiming()
 
   int dir = gSystem->mkdir(outdir,true);
   if(dir==0) cout<<"Created directory: "<<outdir<<endl;
-  else if(dir==-1) cout<<"Directory "<<outdir<<" already exists"<<endl;
+  else if(dir==-1) cout<<"Saving to "<<outdir<<endl;
   
   HFTimingOne(2, 1, 41, 3, 2);
   HFTimingOne(2, 1, -41, 3, 2);
