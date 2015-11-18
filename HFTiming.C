@@ -32,6 +32,13 @@
 #pragma link C++ class std::vector < std::vector<float> >+;
 #endif
 
+float Min(float a, float b) { return a <= b ? a : b; }
+float Max(float a, float b) { return a >= b ? a : b; }
+void h1cosmetic(TH1F* &h1, int linecolor, int linewidth, int fillcolor);
+void h2cosmetic(TH2F* &h2, char* title, TString Xvar, TString Yvar, TString Zvar);
+void makeTextFile(TH1F* timing[][4], int ieta);
+void HFTimingOne(int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
+
 TString fc_thresh = "50";
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/fc"+fc_thresh+"/";
 
@@ -67,55 +74,22 @@ int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
 
-float Min(float a, float b) { return a <= b ? a : b; }
-float Max(float a, float b) { return a >= b ? a : b; }
+//
+//
+void HFTiming(){ 
+  gROOT->SetBatch(true);  //Don't show canvases
+  gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
 
-//
-// h1 cosmetics
-//
-void h1cosmetic(TH1F* &h1, /*char* title, */int linecolor=kBlack, int linewidth=1, int fillcolor=0/*, TString var=""*/)
-{
-    h1->SetLineColor(linecolor);
-    h1->SetLineWidth(linewidth);
-    h1->SetMarkerColor(linecolor);
-    h1->SetFillColor(fillcolor);
-    //h1->SetTitle(title);
-    //h1->SetXTitle(var);
-    h1->SetStats(0);
-    h1->SetMinimum(0.1);
+  int dir = gSystem->mkdir(outdir,true);
+  if(dir==0) cout<<"Created directory: "<<outdir<<endl;
+  else if(dir==-1) cout<<"Saving to "<<outdir<<endl;
+  
+  HFTimingOne(2, 1, 41, 3, 2);
+  HFTimingOne(2, 1, -41, 3, 2);
 }
-
-//
-// h2 cosmetics
-//
-void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TString Zvar="Events/bin")
-{
-    h2->SetTitle(title);
-    h2->SetXTitle(Xvar);
-    h2->SetYTitle(Yvar);
-    h2->SetZTitle(Zvar);
-    h2->SetStats(0);
-}
-
-void makeTextFile(TH1F* timing[][4], int ieta){
-
-  TString name = "HFp_Timing";
-  if(ieta<0) name = "HFm_Timing";
-  name += ".txt";
-
-  ofstream file(outdir+name);
-  for(int i=0; i<Nrun; i++){
-    //run declared up top
-    file<<run[i]<<", "<<timing[i][0]->GetMean()<<", "<<timing[i][0]->GetMeanError()<<endl;
-  }
-  file.close();
-
-  cout<<"Written to "<<outdir+name<<endl;
-}
-
 //
 //
-//
+
 void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=999, int DEPTH=999)
 { 
     TChain ch("hcalTupleTree/tree");
@@ -473,17 +447,44 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
 }
 
 //
+// h1 cosmetics
 //
-//
-void HFTiming() 
-{ 
-  gROOT->SetBatch(true);  //Don't show canvases
-  gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
+void h1cosmetic(TH1F* &h1, /*char* title, */int linecolor=kBlack, int linewidth=1, int fillcolor=0/*, TString var=""*/)
+{
+    h1->SetLineColor(linecolor);
+    h1->SetLineWidth(linewidth);
+    h1->SetMarkerColor(linecolor);
+    h1->SetFillColor(fillcolor);
+    //h1->SetTitle(title);
+    //h1->SetXTitle(var);
+    h1->SetStats(0);
+    h1->SetMinimum(0.1);
+}
 
-  int dir = gSystem->mkdir(outdir,true);
-  if(dir==0) cout<<"Created directory: "<<outdir<<endl;
-  else if(dir==-1) cout<<"Saving to "<<outdir<<endl;
-  
-  HFTimingOne(2, 1, 41, 3, 2);
-  HFTimingOne(2, 1, -41, 3, 2);
+//
+// h2 cosmetics
+//
+void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TString Zvar="Events/bin")
+{
+    h2->SetTitle(title);
+    h2->SetXTitle(Xvar);
+    h2->SetYTitle(Yvar);
+    h2->SetZTitle(Zvar);
+    h2->SetStats(0);
+}
+
+void makeTextFile(TH1F* timing[][4], int ieta){
+
+  TString name = "HFp_Timing";
+  if(ieta<0) name = "HFm_Timing";
+  name += ".txt";
+
+  ofstream file(outdir+name);
+  for(int i=0; i<Nrun; i++){
+    //run declared up top
+    file<<run[i]<<", "<<timing[i][0]->GetMean()<<", "<<timing[i][0]->GetMeanError()<<endl;
+  }
+  file.close();
+
+  cout<<"Written to "<<outdir+name<<endl;
 }
