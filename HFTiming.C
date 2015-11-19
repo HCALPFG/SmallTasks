@@ -31,7 +31,7 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar, TString Yvar, TString Zvar
 void makeTextFile(TH1F* timing[][4], int ieta);
 void HFTimingOne(int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
 
-TString fc_thresh = "test";
+TString fc_thresh = "50";
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/fc"+fc_thresh+"/";
 
 vector<int> run  = { 254790,254852,254879,254906,254907,254914,                                           // 2015C
@@ -49,8 +49,7 @@ vector<int> run  = { 254790,254852,254879,254906,254907,254914,                 
 
 const int Nrun=run.size();
 
-//int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
-int Ethres[4]={50,100000,1000001,1000002};
+int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
 //int Ethres[4]={0,50,100,150};
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
