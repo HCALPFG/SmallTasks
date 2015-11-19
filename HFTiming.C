@@ -22,15 +22,7 @@
 #include "TLegend.h"
 #include "TLatex.h"
 #include "TProfile.h"
-
 #include <TError.h>
-
-// In order to use vector of vectors : vector<vector<data type> >
-// ACLiC makes dictionary for this
-// [ref] http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=10236&p=44117#p44117
-#ifdef __MAKECINT__
-#pragma link C++ class std::vector < std::vector<float> >+;
-#endif
 
 float Min(float a, float b) { return a <= b ? a : b; }
 float Max(float a, float b) { return a >= b ? a : b; }
@@ -39,43 +31,31 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar, TString Yvar, TString Zvar
 void makeTextFile(TH1F* timing[][4], int ieta);
 void HFTimingOne(int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
 
-TString fc_thresh = "50";
+TString fc_thresh = "test";
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/fc"+fc_thresh+"/";
 
-// Runs before calibration: 254231, 254232
-// Runs with no entries: 256673, 25674, 256842, 258655
-// Runs with <=11 entries for either channel: 256866, 256869, 257614, 257804, 258129, 258136, 258714, 258741
-// Runs with no isolated bx: 258211, 258213, 25214, 258215, 258287, 258403, 258425, 258426, 254427, 258428, 258432, 258434, 258440, 258444, 258445, 258446, 258448, 259637, 260425, 260426, 260427",260431, 260532, 260533, 260534, 260536, 260538, 260541, 260575, 260576, 260577, 260593, 260627
-
-vector<int> run  = { 254790,254852,254879,254906,254907,254914,    // 2015C
-		     256630,256675,256676,256677,256801,256843,    // 2015D
-		     256867,256868,256926,256941,257461,257531,
-		     257599,257613,257645,257682,257722,257723,
-		     257735,257751,257805,257816,257819,257968,
-		     257969,258157,258158,258159,258177,258656,
-		     258694,258702,258703,258705,258706,258712,
+vector<int> run  = { 254790,254852,254879,254906,254907,254914,                                           // 2015C
+		     256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D
+		     257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968,
+		     257969,258157,258158,258159,258177,258656,258694,258702,258703,258705,258706,258712,
 		     258713,258742,258745,258749,258750,
 		     
-		     259152,259157,259158,259159,259161,259162,    // Low-luminosity Totem Runs
-		     259163,259164,259167,259199,259200,259201,
-		     259207,259208,259236,259237,259351,259352,
-		     259384,259385,259388,259399,259429,259431,
+		     259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
+		     259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431,
 
-		     259626,259637,259681,259683,259685,259686,    //2015D
-		     259721,259809,259810,259811,259813,259817,
-		     259818,259820,259821,259822,259862,259890,
-		     259891,260373                              }; //End of 2015 pp collisions
+		     259626,259637,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820, // 2015D
+		     259821,259822,259862,259890,259891,260373,
+                    }; //End of 2015 pp collisions
 
 const int Nrun=run.size();
 
-
-int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
+//int Ethres[4]={fc_thresh.Atoi(),100000,1000001,1000002};
+int Ethres[4]={50,100000,1000001,1000002};
 //int Ethres[4]={0,50,100,150};
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
 
-//
-//
+// Macro
 void HFTiming(){ 
   gROOT->SetBatch(true);  //Don't show canvases
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
@@ -87,9 +67,8 @@ void HFTiming(){
   HFTimingOne(2, 1, 41, 3, 2);
   HFTimingOne(2, 1, -41, 3, 2);
 }
-//
-//
 
+// Main Looper
 void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=999, int DEPTH=999)
 { 
     TChain ch("hcalTupleTree/tree");
@@ -100,10 +79,7 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
     ch.Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
     
-
-    // 
     // Branches 
-    // 
     int   run_ = 0;
     ch.SetBranchAddress("run", &run_);
     int   ls_ = 0;
@@ -127,181 +103,168 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     vector<vector<float> >   *HFDigiNomFC_ = 0;
     ch.SetBranchAddress("HFDigiNomFC", &HFDigiNomFC_); 
 
-    //
+    
     // histograms
-    //
     TH1F *h1[Nrun][4], *h2[Nrun][4], *h12[Nrun][4], *h2over12[Nrun][4], *ht[Nrun][4], *h1over2[Nrun][4], *havgtime[Nrun][4]; 
     TProfile *h2profile[Nrun][4];
 
-    for(int irun=0; irun<Nrun; irun++) 
-    {
-        for(int i=0; i<4; i++)
-        {
-            int Ethreslow=Ethres[i];
-            int Ethreshigh;
-            if(i==3) Ethreshigh=999;
-            else Ethreshigh=Ethres[i+1];
+    for(int irun=0; irun<Nrun; irun++){
+      for(int i=0; i<4; i++){
+	int Ethreslow=Ethres[i];
+	int Ethreshigh;
+	if(i==3) Ethreshigh=999;
+	else Ethreshigh=Ethres[i+1];
 
-            h1[irun][i]        = new TH1F(Form("h1_run%i_E%iTo%i", run[irun],         Ethreslow,Ethreshigh),  Form("TS%i",TSadjacent),                                 50, 0, 300);
-            h2[irun][i]        = new TH1F(Form("h2_run%i_E%iTo%i", run[irun],         Ethreslow,Ethreshigh),  Form("TS%i",TStoCheck),                                  50, 0, 300);
-            h12[irun][i]       = new TH1F(Form("h12_run%i_E%iTo%i", run[irun],        Ethreslow,Ethreshigh),  Form("TS%i+TS%i",TSadjacent,TStoCheck),                  50, 0, 600);
-            h2over12[irun][i]  = new TH1F(Form("h2over12_run%i_E%iTo%i", run[irun],    Ethreslow,Ethreshigh),  Form("TS%i/(TS%i+TS%i)",TStoCheck,TSadjacent,TStoCheck), 20, 0, 1);
-            h1over2[irun][i]   = new TH1F(Form("h1over2_run%i_E%iTo%i", run[irun],    Ethreslow,Ethreshigh),  Form("TS%i/TS%i",TSadjacent,TStoCheck),                  20, 0, 5);
-            havgtime[irun][i]  = new TH1F(Form("havgtime_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "Energy-avg timinig (in the unit of TS)",                30, 0, 3);
-            h2profile[irun][i]  = new TProfile(Form("h2profile_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "h2profile",        1000,0,1000,0,1);
+	h1[irun][i]        = new TH1F(Form("h1_run%i_E%iTo%i", run[irun],         Ethreslow,Ethreshigh),  Form("TS%i",TSadjacent),                                 50, 0, 300);
+	h2[irun][i]        = new TH1F(Form("h2_run%i_E%iTo%i", run[irun],         Ethreslow,Ethreshigh),  Form("TS%i",TStoCheck),                                  50, 0, 300);
+	h12[irun][i]       = new TH1F(Form("h12_run%i_E%iTo%i", run[irun],        Ethreslow,Ethreshigh),  Form("TS%i+TS%i",TSadjacent,TStoCheck),                  50, 0, 600);
+	h2over12[irun][i]  = new TH1F(Form("h2over12_run%i_E%iTo%i", run[irun],    Ethreslow,Ethreshigh),  Form("TS%i/(TS%i+TS%i)",TStoCheck,TSadjacent,TStoCheck), 20, 0, 1);
+	h1over2[irun][i]   = new TH1F(Form("h1over2_run%i_E%iTo%i", run[irun],    Ethreslow,Ethreshigh),  Form("TS%i/TS%i",TSadjacent,TStoCheck),                  20, 0, 5);
+	havgtime[irun][i]  = new TH1F(Form("havgtime_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "Energy-avg timinig (in the unit of TS)",                30, 0, 3);
+	h2profile[irun][i]  = new TProfile(Form("h2profile_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "h2profile",        1000,0,1000,0,1);
         
-            h1[irun][i]->Sumw2();
-            h2[irun][i]->Sumw2();
-            h12[irun][i]->Sumw2();
-            h2over12[irun][i]->Sumw2();
-            h1over2[irun][i]->Sumw2();
-            havgtime[irun][i]->Sumw2();
+	h1[irun][i]->Sumw2();
+	h2[irun][i]->Sumw2();
+	h12[irun][i]->Sumw2();
+	h2over12[irun][i]->Sumw2();
+	h1over2[irun][i]->Sumw2();
+	havgtime[irun][i]->Sumw2();
 
-            h1cosmetic(h1[irun][i],       HistColor[i], 2, 0); 
-            h1cosmetic(h2[irun][i],       HistColor[i], 2, 0); 
-            h1cosmetic(h12[irun][i],      HistColor[i], 2, 0); 
-            h1cosmetic(h2over12[irun][i], HistColor[i], 2, 0); 
-            h1cosmetic(h1over2[irun][i],  HistColor[i], 2, 0); 
-            h1cosmetic(havgtime[irun][i], HistColor[i], 2, 0); 
-        } 
+	h1cosmetic(h1[irun][i],       HistColor[i], 2, 0); 
+	h1cosmetic(h2[irun][i],       HistColor[i], 2, 0); 
+	h1cosmetic(h12[irun][i],      HistColor[i], 2, 0); 
+	h1cosmetic(h2over12[irun][i], HistColor[i], 2, 0); 
+	h1cosmetic(h1over2[irun][i],  HistColor[i], 2, 0); 
+	h1cosmetic(havgtime[irun][i], HistColor[i], 2, 0); 
+      } 
     } 
    
-
-
-    //
     // main event loop
-    //
+    int skiprun = -999;
     unsigned int nentries = (Int_t)ch.GetEntries();
     cout << "[HF Timing] The number of entries is: " << nentries << endl;
-    for(unsigned int ievent = 0; ievent<nentries; ievent++)
-    {
-        ch.GetEntry(ievent); 
+    for(unsigned int ievent = 0; ievent<nentries; ievent++){
+      ch.GetEntry(ievent); 
     
-        // Status
-        if((ievent%100000)==0){
-          if (isatty(1)) {
-            printf("\r[HF Timing] Event: %i / %i (%i%%)",ievent,nentries,(int)((float)ievent/(float)nentries*100));
-            fflush(stdout);
-            if(ievent==nentries-1) printf("\n");
-          }
-        }        
+      // Status
+      if((ievent%100000)==0){
+	if (isatty(1)) {
+	  printf("\r[HF Timing] Event: %i / %i (%i%%)",ievent,nentries,(int)((float)ievent/(float)nentries*100));
+	  fflush(stdout);
+	  if(ievent==nentries-1) printf("\n");
+	}
+      }        
 	
-        // Choose isolated bunch crossing
-	if( run_==254231                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
-	if( run_==254232                    && bx_!=895 && bx_!=1780 && bx_!=2674   ) continue;
-	if( run_==254790                    && bx_!=1   && bx_!=61   && bx_!=141    ) continue;
-	if( run_==254852                    && bx_!=39  && bx_!=91   && bx_!=141    ) continue;
-	if((run_>=254879 && run_<=254914)   && bx_!=39  && bx_!=91                  ) continue;
-	if((run_>=256630 && run_<=258159)   && bx_!=39                              ) continue;
-	if( run_==258177                    && bx_!=39                              ) continue; //WBM weird
-	if((run_>=258655 && run_<=258656)   && bx_!=20                              ) continue; //WBM weird
-	if( run_==258694                    && bx_!=20                              ) continue; //WBM weird
-	if((run_>=258702 && run_<=258714)   && bx_!=20                              ) continue; //WBM weird
-	if((run_>=258741 && run_<=258750)   && bx_!=20                              ) continue; //WBM weird
+      // Choose isolated bunch crossing
+      if( run_==254790                    && bx_!=1   && bx_!=61   && bx_!=141    ) continue;
+      if( run_==254852                    && bx_!=39  && bx_!=91   && bx_!=141    ) continue;
+      if((run_>=254879 && run_<=254914)   && bx_!=39  && bx_!=91                  ) continue;
+      if((run_>=256630 && run_<=258159)   && bx_!=39                              ) continue;
+      if( run_==258177                    && bx_!=39                              ) continue;
+      if((run_>=258655 && run_<=258656)   && bx_!=20                              ) continue;
+      if( run_==258694                    && bx_!=20                              ) continue;
+      if((run_>=258702 && run_<=258714)   && bx_!=20                              ) continue;
+      if((run_>=258741 && run_<=258750)   && bx_!=20                              ) continue;
+      if((run_>=259152 && run_<=259431)   && bx_==-1                              ) continue; // Totem runs
+      if( run_==259626                    && bx_!=1                               ) continue; 
+      if((run_>=259681 && run_<=259686)   && bx_!=20                              ) continue;
+      if( run_==259721                    && bx_!=1                               ) continue;
+      if((run_>=259809 && run_<=259822)   && bx_!=20                              ) continue;
+      if( run_==259862                    && bx_!=20                              ) continue;
+      if((run_>=259890 && run_<=259891)   && bx_!=20                              ) continue;
+      if( run_==260373                    && bx_!=1                               ) continue;       
 
-	if((run_>=259152 && run_<=259431)   && bx_==-1                              ) continue; // Totem runs
-	
-	if( run_==259626                    && bx_!=1                               ) continue; 
-	if((run_>=259681 && run_<=259686)   && bx_!=20                              ) continue;
-	if( run_==259721                    && bx_!=1                               ) continue;
-	if((run_>=259809 && run_<=259822)   && bx_!=20                              ) continue;
-	if( run_==259862                    && bx_!=20                              ) continue;
-	if((run_>=259890 && run_<=259891)   && bx_!=20                              ) continue;
-	if( run_==260373                    && bx_!=1                               ) continue;       
+      // Skip List
+      if((run_>=254231 && run_<=254323)) continue;           // Pre-calibration
+      if((run_>=256673 && run_<=256674)) continue;           // No Entries
+      if(run_==256842) continue;                             // No Entries
+      if(run_==256866) continue;                             // Low stats
+      if(run_==256869) continue;                             // Low stats
+      if(run_==257614) continue;                             // Low stats
+      if(run_==257804) continue;                             // Low stats
+      if(run_==258129) continue;                             // Low stats
+      if(run_==258136) continue;                             // Low stats
+      if((run_>=258211 && run_<=258448)) continue;           // No iso bx
+      if(run_==258655) continue;                             // No Entries
+      if(run_==258714) continue;                             // Low stats
+      if(run_==258741) continue;                             // Low stats
+      if(run_==259813) continue;                             // Low stats
+      if(run_==259817) continue;                             // Low stats
+      if(run_==260425) continue;                             // No iso bx
+      if(run_==260426) continue;                             // No iso bx
 
-        // loop over channels
-        for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
-        { 
-            // Selected only interesting channel
-            if( IETA!=999 && !(HFDigiIEta_->at(ich)==IETA && HFDigiIPhi_->at(ich)==IPHI && HFDigiDepth_->at(ich)==DEPTH)) continue; 
+      // loop over channels
+      for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++){ 
+	// Selected only interesting channel
+	if( IETA!=999 && !(HFDigiIEta_->at(ich)==IETA && HFDigiIPhi_->at(ich)==IPHI && HFDigiDepth_->at(ich)==DEPTH)) continue; 
 
-            // Fill histograms 
-            for(int i=0; i<4; i++) // for different E or Q cuts
-            { 
-                if(i<3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i] || 
-                          (HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))>Ethres[i+1]) ) continue;
-                if(i==3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i]) ) continue;
+	// Fill histograms 
+	for(int i=0; i<4; i++){  // for different E or Q cuts
+	  if(i<3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i] || 
+		     (HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))>Ethres[i+1]) ) continue;
+	  if(i==3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i]) ) continue;
 
-                if(0) // DEBUG
-                {
-                    cout << Form("[HF Timing] Subdet=%i IEta=%i IPhi=%i Depth=%i RecEnergy=%.3f\n",
-                            HFDigiSubdet_->at(ich), 
-                            HFDigiIEta_->at(ich),    
-                            HFDigiIPhi_->at(ich),    
-                            HFDigiDepth_->at(ich),   
-                            HFDigiRecEnergy_->at(ich) ); 
-                } 
+	  if(0){ // DEBUG
+	    cout << Form("[HF Timing] Subdet=%i IEta=%i IPhi=%i Depth=%i RecEnergy=%.3f\n",
+			 HFDigiSubdet_->at(ich), 
+			 HFDigiIEta_->at(ich),    
+			 HFDigiIPhi_->at(ich),    
+			 HFDigiDepth_->at(ich),   
+			 HFDigiRecEnergy_->at(ich) ); 
+	  } 
                 
-                //
-                // Filling histogram
-                //
-                
-		// Empty runs
-		if(run_==254231) continue;
-		if(run_==254232) continue;
-		if((run_>=256673 && run_<=256674)) continue;
-		if(run_==256842) continue;
-		if(run_==258655) continue;
-		if((run_>=258211 && run_<=258448)) continue;
-		if(run_==256866) continue;
-		if(run_==256869) continue;
-		if(run_==257614) continue;
-		if(run_==257804) continue;
-		if(run_==258129) continue;
-		if(run_==258136) continue;
-		if(run_==258714) continue;
-		if(run_==258741) continue;
+	  //Make sure this run is part of the run vector above
+	  int ithisrun=-1;
+	  for(int irun=0; irun<Nrun; irun++) 
+	    if(run_==run[irun]) ithisrun = irun;
 
+	  if(ithisrun==-1) {
+	    if(run_!=skiprun){
+	      cout<<"\n\e[31m[HF Timing]\e[0m WARNING: Run = "<<run_<<" is being skipped!"<<endl;
+	      skiprun = run_;
+	      continue;
+	    }
+	    else		    
+	      continue;
+	  }
 
-                // Get irun   
-                int ithisrun=-1;
-                for(int irun=0; irun<Nrun; irun++) if(run_==run[irun]) ithisrun = irun; 
-                if(ithisrun==-1) { cout << "Run number does not match!!!" << endl; continue; }
-
-                h1[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent),299.999));
-                h2[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TStoCheck),299.999)); 
-                h12[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck),599.999));
-                h1over2[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent)/HFDigiFC_->at(ich).at(TStoCheck),4.999));
-                h2over12[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck)),9.999));
-                h2profile[ithisrun][i]->Fill(ls_, HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))); 
+	  //Filling Histograms
+	  h1[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent),299.999));
+	  h2[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TStoCheck),299.999)); 
+	  h12[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck),599.999));
+	  h1over2[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent)/HFDigiFC_->at(ich).at(TStoCheck),4.999));
+	  h2over12[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck)),9.999));
+	  h2profile[ithisrun][i]->Fill(ls_, HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))); 
                 
 
-                //  
-                // energy average timing (considering only TS1 and TS2) 
-                //  
-                float avgtime=1; 
-                float num =0;
-                float deno =0;
-                for(int icap=1; icap<3; icap++)
-                { 
-                    num = num + icap*(HFDigiFC_->at(ich).at(icap));
-                    deno = deno + HFDigiFC_->at(ich).at(icap);
-                }
-                avgtime = num/deno;
-                havgtime[ithisrun][i]->Fill(avgtime);  
-            }
+	  // energy average timing (considering only TS1 and TS2) 
+	  float avgtime=1; 
+	  float num =0;
+	  float deno =0;
+	  for(int icap=1; icap<3; icap++){ 
+	    num = num + icap*(HFDigiFC_->at(ich).at(icap));
+	    deno = deno + HFDigiFC_->at(ich).at(icap);
+	  }
+	  avgtime = num/deno;
+	  havgtime[ithisrun][i]->Fill(avgtime);  
+	}
 
-        } //for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
+      } //for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
     } //for(unsigned int ievent = 0; ievent<nentries; ievent++)
 
-
-    //
+   
     // Draw 
-    //
-    if(DoNorm)
-    {
-        for(int irun=0; irun<Nrun; irun++) 
-        { 
-            for(int i=0; i<4; i++) 
-            { 
-                h1[irun][i]->Scale(1./h1[irun][i]->Integral());
-                h2[irun][i]->Scale(1./h2[irun][i]->Integral());
-                h12[irun][i]->Scale(1./h12[irun][i]->Integral());
-                h1over2[irun][i]->Scale(1./h1over2[irun][i]->Integral());
-                h2over12[irun][i]->Scale(1./h2over12[irun][i]->Integral());
-                havgtime[irun][i]->Scale(1./havgtime[irun][i]->Integral());
-            }
-        }
+    if(DoNorm){
+      for(int irun=0; irun<Nrun; irun++){ 
+	for(int i=0; i<4; i++){ 
+	  h1[irun][i]->Scale(1./h1[irun][i]->Integral());
+	  h2[irun][i]->Scale(1./h2[irun][i]->Integral());
+	  h12[irun][i]->Scale(1./h12[irun][i]->Integral());
+	  h1over2[irun][i]->Scale(1./h1over2[irun][i]->Integral());
+	  h2over12[irun][i]->Scale(1./h2over12[irun][i]->Integral());
+	  havgtime[irun][i]->Scale(1./havgtime[irun][i]->Integral());
+	}
+      }
     }
 
     TLatex *tex_RUN = new TLatex(0.4,0.85,Form("Run number = %i", run_));
@@ -316,88 +279,79 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     tex_ch->SetLineWidth(2);
     tex_ch->SetTextAlign(12);
 
-    for(int irun=0; irun<Nrun; irun++) 
-    {  
+    for(int irun=0; irun<Nrun; irun++){  
 
-       // if(h1[irun][0]->Integral()!=0) continue;
+      // Legend 
+      TLegend *l1 = new TLegend(0.4, 0.5, 0.9, 0.75);
+      l1->SetBorderSize(0);
+      l1->SetFillColor(0);
+      l1->SetFillStyle(0);
+      l1->SetFillColor(kWhite);
+      l1->SetLineColor(kWhite);
+      l1->SetShadowColor(kWhite);
+      l1->AddEntry(h1[irun][0],        Form("%i < E_{rechit} < %i GeV ",Ethres[0],Ethres[1]),    "lp");
+      l1->AddEntry(h1[irun][1],        Form("%i < E_{rechit} < %i GeV ",Ethres[1],Ethres[2]),    "lp");
+      l1->AddEntry(h1[irun][2],        Form("%i < E_{rechit} < %i GeV ",Ethres[2],Ethres[3]),    "lp");
+      l1->AddEntry(h1[irun][3],        Form("E_{rechit} > %i GeV",Ethres[3]),    "lp");
         
-        //
-        // Legend 
-        //
-        TLegend *l1 = new TLegend(0.4, 0.5, 0.9, 0.75);
-        l1->SetBorderSize(0);
-        l1->SetFillColor(0);
-        l1->SetFillStyle(0);
-        l1->SetFillColor(kWhite);
-        l1->SetLineColor(kWhite);
-        l1->SetShadowColor(kWhite);
-        l1->AddEntry(h1[irun][0],        Form("%i < E_{rechit} < %i GeV ",Ethres[0],Ethres[1]),    "lp");
-        l1->AddEntry(h1[irun][1],        Form("%i < E_{rechit} < %i GeV ",Ethres[1],Ethres[2]),    "lp");
-        l1->AddEntry(h1[irun][2],        Form("%i < E_{rechit} < %i GeV ",Ethres[2],Ethres[3]),    "lp");
-        l1->AddEntry(h1[irun][3],        Form("E_{rechit} > %i GeV",Ethres[3]),    "lp");
-        
-        //
-        // Canvas 
-        //
-        TCanvas *c = new TCanvas("c", "c", 1200, 800);
-        c->Divide(3,2);
-        c->cd(1);
-        h1[irun][0]->SetMaximum(h1[irun][0]->GetMaximum()*2);
-        for(int i=0; i<4; i++) h1[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));  
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");
-        l1->Draw("same");
-        c->cd(2);
-        h2[irun][0]->SetMaximum(h2[irun][0]->GetMaximum()*2);
-        for(int i=0; i<4; i++) h2[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");
-        c->cd(3);
-        h12[irun][0]->SetMaximum(h12[irun][0]->GetMaximum()*2);
-        for(int i=0; i<4; i++) h12[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");
-        c->cd(4);
-        c->cd(4)->SetLogy(1);
-        h1over2[irun][0]->SetMaximum(h1over2[irun][0]->GetMaximum()*50);
-        for(int i=0; i<4; i++) h1over2[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");
-        c->cd(5);
-        c->cd(5)->SetLogy(0);
-        h2over12[irun][0]->SetMaximum(h2over12[irun][0]->GetMaximum()*2);
-        for(int i=0; i<4; i++) h2over12[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");
-        c->cd(6);
-        havgtime[irun][0]->SetMaximum(havgtime[irun][0]->GetMaximum()*2);
-        for(int i=0; i<4; i++) havgtime[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
-        tex_RUN->Draw("SAME");
-        tex_ch->Draw("SAME");  
+      // Canvas 
+      TCanvas *c = new TCanvas("c", "c", 1200, 800);
+      c->Divide(3,2);
+      c->cd(1);
+      h1[irun][0]->SetMaximum(h1[irun][0]->GetMaximum()*2);
+      for(int i=0; i<4; i++) h1[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));  
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");
+      l1->Draw("same");
+      c->cd(2);
+      h2[irun][0]->SetMaximum(h2[irun][0]->GetMaximum()*2);
+      for(int i=0; i<4; i++) h2[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");
+      c->cd(3);
+      h12[irun][0]->SetMaximum(h12[irun][0]->GetMaximum()*2);
+      for(int i=0; i<4; i++) h12[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");
+      c->cd(4);
+      c->cd(4)->SetLogy(1);
+      h1over2[irun][0]->SetMaximum(h1over2[irun][0]->GetMaximum()*50);
+      for(int i=0; i<4; i++) h1over2[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");
+      c->cd(5);
+      c->cd(5)->SetLogy(0);
+      h2over12[irun][0]->SetMaximum(h2over12[irun][0]->GetMaximum()*2);
+      for(int i=0; i<4; i++) h2over12[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");
+      c->cd(6);
+      havgtime[irun][0]->SetMaximum(havgtime[irun][0]->GetMaximum()*2);
+      for(int i=0; i<4; i++) havgtime[irun][i]->Draw(Form("E %s",i==0?"":"SAME"));
+      tex_RUN->Draw("SAME");
+      tex_ch->Draw("SAME");  
         
 
-        cout << Form("RUN=%i IETA=%i IPHI=%i DEPTH=%i",run[irun],IETA,IPHI,DEPTH) << endl;
-        cout << "Peak : " << havgtime[irun][0]->GetMean() << " +/- " << havgtime[irun][0]->GetRMS()<< endl;
+      //cout << Form("RUN=%i IETA=%i IPHI=%i DEPTH=%i",run[irun],IETA,IPHI,DEPTH) << endl;
+      //cout << "Peak : " << havgtime[irun][0]->GetMean() << " +/- " << havgtime[irun][0]->GetRMS()<< endl;
 
-        c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
-        //c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.C",run[irun],IETA,IPHI,DEPTH));
-	delete c;
+      c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+      delete c;
         
-        TCanvas *cprofile = new TCanvas("cprofile", "cprofile", 600, 400);
-        cprofile->cd(1);
-        h2profile[irun][0]->Draw();
-	if(h2profile[irun][0]->GetEntries()<=11) cout<<"Low stats: Run = "<<run[irun]<<endl;
-        cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+      TCanvas *cprofile = new TCanvas("cprofile", "cprofile", 600, 400);
+      cprofile->cd(1);
+      h2profile[irun][0]->Draw();
+      if(h2profile[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
+      cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
 	
-	delete cprofile;
+      delete cprofile;
     }
 
     //
     // Make a summary plot 
     //
     TH1F *hsummary = new TH1F("hsummary",  "hsummary", Nrun, 0, Nrun); 
-    for(int irun=0; irun<Nrun; irun++) 
-    {   
+    for(int irun=0; irun<Nrun; irun++){   
         hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
         hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
         //hsummary->SetBinError(irun+1,0);  
@@ -426,46 +380,34 @@ void HFTimingOne(int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=9
     delete csum;
 
     makeTextFile(h2over12,IETA);
-
-    //
+    
     // clean 
-    //
-    for(int irun=0; irun<Nrun; irun++) 
-    {
-        for(int i=0; i<4; i++)
-        {
-            delete h1[irun][i]; 
-            delete h2[irun][i]; 
-            delete h12[irun][i]; 
-            delete h1over2[irun][i]; 
-            delete h2over12[irun][i]; 
-            delete havgtime[irun][i]; 
-            delete h2profile[irun][i]; 
-        } 
+    for(int irun=0; irun<Nrun; irun++) {
+      for(int i=0; i<4; i++){
+	delete h1[irun][i]; 
+	delete h2[irun][i]; 
+	delete h12[irun][i]; 
+	delete h1over2[irun][i]; 
+	delete h2over12[irun][i]; 
+	delete havgtime[irun][i]; 
+	delete h2profile[irun][i]; 
+      } 
     }
     delete hsummary; 
 }
 
-//
 // h1 cosmetics
-//
-void h1cosmetic(TH1F* &h1, /*char* title, */int linecolor=kBlack, int linewidth=1, int fillcolor=0/*, TString var=""*/)
-{
+void h1cosmetic(TH1F* &h1, int linecolor=kBlack, int linewidth=1, int fillcolor=0){
     h1->SetLineColor(linecolor);
     h1->SetLineWidth(linewidth);
     h1->SetMarkerColor(linecolor);
     h1->SetFillColor(fillcolor);
-    //h1->SetTitle(title);
-    //h1->SetXTitle(var);
     h1->SetStats(0);
     h1->SetMinimum(0.1);
 }
 
-//
 // h2 cosmetics
-//
-void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TString Zvar="Events/bin")
-{
+void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TString Zvar="Events/bin"){
     h2->SetTitle(title);
     h2->SetXTitle(Xvar);
     h2->SetYTitle(Yvar);
@@ -473,6 +415,7 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TStrin
     h2->SetStats(0);
 }
 
+//Print all the values for the summary plot
 void makeTextFile(TH1F* timing[][4], int ieta){
 
   TString name = "HFp_Timing";
