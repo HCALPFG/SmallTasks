@@ -1,62 +1,57 @@
-#include <iostream>
+#include <algorithm> 
+#include <ctime>
 #include <fstream>
-#include <vector>
-#include <sstream>
 #include <iomanip> // for setw()
-#include <algorithm>    // std::min
+#include <iostream>
+#include <sstream>
+#include <vector>
 
-#include "TROOT.h"
+#include "TBranch.h"
+#include "TCanvas.h"
 #include "TChain.h"
+#include "TDirectory.h"
+#include "TError.h"
 #include "TF1.h"
-#include "TMath.h"
 #include "TFile.h"
-#include "TTree.h"
 #include "TH1F.h"
 #include "TH2F.h"
-#include "TCanvas.h"
-#include "TDirectory.h"
-#include "TSystem.h"
-#include "TBranch.h"
+#include "TLatex.h"
+#include "TLegend.h"
+#include "TMath.h"
+#include "TProfile.h"
+#include "TROOT.h"
 #include "TString.h"
 #include "TStyle.h"
-#include "TLegend.h"
-#include "TLatex.h"
-#include "TProfile.h"
-#include <TError.h>
+#include "TSystem.h"
+#include "TTree.h"
 
-float Min(float a, float b) { return a <= b ? a : b; }
-float Max(float a, float b) { return a >= b ? a : b; }
-void h1cosmetic(TH1F* &h1, int linecolor, int linewidth, int fillcolor);
-void h2cosmetic(TH2F* &h2, char* title, TString Xvar, TString Yvar, TString Zvar);
-void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
-vector< vector<int> > findFillScheme(TChain* ch, TString bxtype);
-bool isGoodBX(int run_num, int bx, vector< vector<int> > fillscheme);
-void makeTextFile(TH1F* timing[][4], int ieta);
+#include "HFTiming.h"
 
-TString fc_thresh = "50";
+TString fc_thresh = "test";
 TString which_bx = "first"; //Choose "iso", "first", or "last" (in a train)
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/"+which_bx+"/fc"+fc_thresh+"/";
 
 TChain* ch = new TChain("hcalTupleTree/tree");
 
-vector<int> run  = { 254790,254852,254879,254906,254907,254914,                                           // 2015C
-		     256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D
-		     257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968,
-		     257969,258157,258158,258159,258177,258656,258694,258702,258703,258705,258706,258712,
-		     258713,258742,258745,258749,258750,
-		     
-		     259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
-		     259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431,
+vector<unsigned int> run  = { //254790,254852,254879,254906,254907,254914,                                           // 2015C
+			      //			      256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D
+			      //			      257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968,
+			      //			      257969,258157,258158,258159,
+			      258177,258656,258694,258702,258703,258705,258706,258712,
+			      258713,258742,258745,258749,258750
+			      
+			      //			      259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
+			      //			      259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431
 
-		     259626,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820,259821, // 2015D
-		     259822,259862,259890,259891,260373,260427,260431,260532,260533,260534,260536,260538,
-		     260541,260575,260576,260577,260593,260627
-		     }; //End of 2015 pp collisions
+			      // 259626,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820,259821, // 2015D
+			      //			      259822,259862,259890,259891,260373,260427,260431,260532,260533,260534,260536,260538,
+			      //			      260541,260575,260576,260577,260593,260627
+                             }; //End of 2015 pp collisions
 
-const int Nrun=run.size();
+const unsigned int Nrun=run.size();
 
-int Ethres[4]={fc_thresh.Atoi(),100000,100001,100002};
-//int Ethres[4]={50,100000,100001,100002};
+//int Ethres[4]={fc_thresh.Atoi(),100000,100001,100002};
+int Ethres[4]={50,100000,100001,100002};
 //int Ethres[4]={50,100,150,200};
 //if(fcthresh=="binned"){  Ethres[0]=0; Ethresh[1]=50; Ethresh[2]=100; Ethresh[3]=150;}
 //if(fcthresh=="test"){  Ethres[0]=50; Ethresh[1]=100000; Ethresh[2]=100001; Ethresh[3]=100002;}
@@ -70,24 +65,24 @@ void HFTiming(){
   gROOT->SetBatch(true);  //Don't show canvases
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
 
-  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
-  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
+  //  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
+  //  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
   ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
+  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
+  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
+  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
+  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
 
   int dir = gSystem->mkdir(outdir,true);
   if(dir==0){
-    cout<<"[HF Timing] Set Up: Created directory: "<<outdir<<endl;
+    cout<<"\n[HF Timing] Configuration: Created directory: "<<outdir<<"\n"<<endl;
     gSystem->CopyFile("/afs/cern.ch/user/r/rbhandar/www/index.php",outdir+"index.php");
   }
   else if(dir==-1) 
-    cout<<"[HF Timing] Set Up: Saving to "<<outdir<<endl;
+    cout<<"\n[HF Timing] Configuration: Saving to "<<outdir<<"\n"<<endl;
 
-  //Program
-  vector< vector<int> > fillScheme = findFillScheme(ch, which_bx);
+  //Analysis
+  vector< vector<int> > fillScheme = findFillScheme(ch, which_bx, true);
 
   HFTimingOne(fillScheme, 2, 1, 41, 3, 2);
   HFTimingOne(fillScheme, 2, 1, -41, 3, 2);
@@ -95,36 +90,16 @@ void HFTiming(){
 
 // Main Looper
 void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacent = 1, int IETA=999, int IPHI=999, int DEPTH=999){ 
+  time_t begtime, endtime;
+  time(&begtime);
 
-  // Branches 
-  int   run_ = 0;
-  ch->SetBranchAddress("run", &run_);
-  int   ls_ = 0;
-  ch->SetBranchAddress("ls", &ls_);
-  int   bx_ = 0;
-  ch->SetBranchAddress("bx", &bx_);
-  vector<int>   *HFDigiSubdet_ = 0;
-  ch->SetBranchAddress("HFDigiSubdet", &HFDigiSubdet_);
-  vector<int>   *HFDigiIEta_ = 0;
-  ch->SetBranchAddress("HFDigiIEta", &HFDigiIEta_);
-  vector<int>   *HFDigiIPhi_ = 0;
-  ch->SetBranchAddress("HFDigiIPhi", &HFDigiIPhi_);
-  vector<int>   *HFDigiDepth_ = 0;
-  ch->SetBranchAddress("HFDigiDepth", &HFDigiDepth_);
-  vector<float>   *HFDigiRecEnergy_ = 0;
-  ch->SetBranchAddress("HFDigiRecEnergy", &HFDigiRecEnergy_);
-  vector<vector<float> >   *HFDigiFC_ = 0;
-  ch->SetBranchAddress("HFDigiFC", &HFDigiFC_);  // Note that FC is after ped subtraction while NomFC is not 
-  vector<vector<float> >   *HFDigiPedFC_ = 0;
-  ch->SetBranchAddress("HFDigiPedFC", &HFDigiPedFC_); 
-  vector<vector<float> >   *HFDigiNomFC_ = 0;
-  ch->SetBranchAddress("HFDigiNomFC", &HFDigiNomFC_); 
+  init_chain(ch);
 
   // histograms
   TH1F *h1[Nrun][4], *h2[Nrun][4], *h12[Nrun][4], *h2over12[Nrun][4], *ht[Nrun][4], *h1over2[Nrun][4], *havgtime[Nrun][4]; 
   TProfile *h2profile[Nrun][4];
 
-  for(int irun=0; irun<Nrun; irun++){
+  for(unsigned int irun=0; irun<Nrun; irun++){
     for(int i=0; i<4; i++){
       int Ethreslow=Ethres[i];
       int Ethreshigh;
@@ -156,40 +131,22 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
   } 
    
   // main event loop
-  int skiprun = -999;
+  unsigned int skiprun = 9999;
   unsigned int nentries = (Int_t)ch->GetEntries();
-  cout << "[HF Timing] The number of entries is: " << nentries << endl;
   for(unsigned int ievent = 0; ievent<nentries; ievent++){
     ch->GetEntry(ievent); 
     
     // Status
-    if((ievent%100000)==0){
+    if((ievent<100&&ievent%10==0) || (ievent<1000&&ievent%100==0) || (ievent<10000&&ievent%1000==0) || 
+       (ievent<100000&&ievent%10000==0) || (ievent%100000==0) || (ievent+1==nentries)){
       if (isatty(1)) {
-	printf("\r[HF Timing] Processing Events: %i / %i (%i%%)",ievent,nentries,(int)((float)ievent/(float)nentries*100));
+	printf("\r[HF Timing] Processing Events: %i / %i (%i%%)",ievent,nentries,static_cast<int>((ievent+1)*100./nentries));
 	fflush(stdout);
-	if(ievent+100000>nentries) printf("\n");
+	if(ievent+1==nentries) printf("\n");
       }
     }        
 	
-    /*    // Choose isolated bunch crossing
-    if( run_==254790                    && bx_!=1   && bx_!=61   && bx_!=141    ) continue;
-    if( run_==254852                    && bx_!=39  && bx_!=91   && bx_!=141    ) continue;
-    if((run_>=254879 && run_<=254914)   && bx_!=39  && bx_!=91                  ) continue;
-    if((run_>=256630 && run_<=258159)   && bx_!=39                              ) continue;
-    if( run_==258177                    && bx_!=39                              ) continue;
-    if((run_>=258655 && run_<=258656)   && bx_!=20                              ) continue;
-    if( run_==258694                    && bx_!=20                              ) continue;
-    if((run_>=258702 && run_<=258714)   && bx_!=20                              ) continue;
-    if((run_>=258741 && run_<=258750)   && bx_!=20                              ) continue;
-    if((run_>=259152 && run_<=259431)   && bx_==-1                              ) continue; // Totem runs
-    if( run_==259626                    && bx_!=1                               ) continue; 
-    if((run_>=259681 && run_<=259686)   && bx_!=20                              ) continue;
-    if( run_==259721                    && bx_!=1                               ) continue;
-    if((run_>=259809 && run_<=259822)   && bx_!=20                              ) continue;
-    if( run_==259862                    && bx_!=20                              ) continue;
-    if((run_>=259890 && run_<=259891)   && bx_!=20                              ) continue;
-    if( run_==260373                    && bx_!=1                               ) continue;       */
-
+    // Choose bunch crossings
     if(!isGoodBX(run_, bx_, goodbxs)) continue;
 
     // Skip List
@@ -235,7 +192,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
                 
 	//Make sure this run is part of the run vector above
 	int ithisrun=-1;
-	for(int irun=0; irun<Nrun; irun++) 
+	for(unsigned int irun=0; irun<Nrun; irun++) 
 	  if(run_==run[irun]) ithisrun = irun;
 
 	if(ithisrun==-1) {
@@ -275,7 +232,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
    
     // Draw 
   if(DoNorm){
-    for(int irun=0; irun<Nrun; irun++){ 
+    for(unsigned int irun=0; irun<Nrun; irun++){ 
       for(int i=0; i<4; i++){ 
 	h1[irun][i]->Scale(1./h1[irun][i]->Integral());
 	h2[irun][i]->Scale(1./h2[irun][i]->Integral());
@@ -299,7 +256,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
   tex_ch->SetLineWidth(2);
   tex_ch->SetTextAlign(12);
 
-  for(int irun=0; irun<Nrun; irun++){  
+  for(unsigned int irun=0; irun<Nrun; irun++){  
 
     // Legend 
     TLegend *l1 = new TLegend(0.4, 0.5, 0.9, 0.75);
@@ -371,7 +328,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
   // Make a summary plot 
   //
   TH1F *hsummary = new TH1F("hsummary",  "hsummary", Nrun, 0, Nrun); 
-  for(int irun=0; irun<Nrun; irun++){   
+  for(unsigned int irun=0; irun<Nrun; irun++){   
     hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
     hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
     //hsummary->SetBinError(irun+1,0);  
@@ -402,7 +359,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
   makeTextFile(h2over12,IETA);
     
   // clean 
-  for(int irun=0; irun<Nrun; irun++) {
+  for(unsigned int irun=0; irun<Nrun; irun++) {
     for(int i=0; i<4; i++){
       delete h1[irun][i]; 
       delete h2[irun][i]; 
@@ -414,41 +371,54 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
     } 
   }
   delete hsummary; 
+  
+  time(&endtime);
+  int seconds = difftime(endtime, begtime);
+  float hertz = nentries; hertz /= seconds;
+  cout<<"[HF Timing] Processed channel "<<IETA<<":"<<IPHI<<":"<<DEPTH<<" in "<<seconds<<" seconds ("<<hoursMinSec(seconds)<<") for "<<nentries
+      <<" events -> "<<roundNumber(hertz,1,1000)<<" kHz, "<<roundNumber(1000,2,hertz)<<" ms per event"<<endl<<endl;
 }
 
 
-vector< vector<int> > findFillScheme(TChain* ch, TString bxtype="iso"){
+vector< vector<int> > findFillScheme(TChain *ch, TString bxtype="iso", bool printbx=false){
+  time_t begtime, endtime;
+  time(&begtime);
 
   if(bxtype!="iso" && bxtype!="first" && bxtype!="last")
-    cout<<"Fill scheme type invalid. bxtype must be \"iso\", \"first\", or \"last\""<<endl;
+    cout<<"Fill scheme type invalid. bxtype must be \"iso\", \"first\", or \"last\""<<endl;  
 
-  int   run_ = 0;
+  unsigned int   run_ = 0;
   ch->SetBranchAddress("run", &run_);
-  int   bx_ = 0;
+  unsigned int   bx_ = 0;
   ch->SetBranchAddress("bx", &bx_);
   vector<vector<float> >   *HFDigiFC_ = 0;
   ch->SetBranchAddress("HFDigiFC", &HFDigiFC_);
 
-  //Initlialize vector of TH2Ds the size of Nrun
+  //Initialize vector of TH2Ds the size of Nrun
   vector<TH2D*> h_bxs;
-  for(int irun=0; irun<Nrun; irun++)
+  for(unsigned int irun=0; irun<Nrun; irun++)
     h_bxs.push_back(new TH2D(Form("run[%i]",irun),"",3563,0,3563,1,0,4000));
 
   //Loop over entries to fill h_bxs
-  int currentrun = -999;
-  unsigned int runidx = -1;
+  unsigned int currentrun = 666;
+  unsigned int runidx = 99999;
   unsigned int nentries = ch->GetEntries();
   for(unsigned int iloop=0; iloop<nentries; iloop++){
-    ch->GetEntry(iloop);
+    ch->GetEntry(iloop);   
 
-    if((iloop%100000)==0){
+    if((iloop<100&&iloop%10==0) || (iloop<1000&&iloop%100==0) || (iloop<10000&&iloop%1000==0) || 
+       (iloop<100000&&iloop%10000==0) || (iloop%100000==0) || (iloop+1==nentries)){
       if (isatty(1)) {
-	printf("\r[HF Timing] Analyzing Fill Scheme: %i / %i (%i%%)",iloop,nentries,(int)((float)iloop/(float)nentries*100));
+	printf("\r[HF Timing] Analyzing fill scheme: %i / %i (%i%%)",iloop,nentries,static_cast<int>((iloop)*100./nentries));
 	fflush(stdout);
-	if(iloop+100000>=nentries) printf("\n");
+	if(iloop+1==nentries){
+	  printf("\r[HF Timing] Analyzing fill scheme: %i / %i (%i%%)",iloop+1,nentries,static_cast<int>((iloop+1.)*100./nentries));
+	  fflush(stdout);
+	  printf("\n");
+	} 
       }
     }        
-    
+
     //Get total charge in channels
     double totalFC12=0;
     for(unsigned int ich=0; ich<HFDigiFC_->size(); ich++)
@@ -458,41 +428,48 @@ vector< vector<int> > findFillScheme(TChain* ch, TString bxtype="iso"){
     if(run_ != currentrun){
       runidx = find(run.begin(),run.end(),run_)-run.begin();
       currentrun = run_;
-      //      cout<<"Event"<<iloop<<": runidx = "<<runidx<<", run = "<<run_<<", currentrun = "<<currentrun<<endl;
     }
-    if((int)runidx!=Nrun)
+    if(runidx!=Nrun)
       if(totalFC12>100)
 	h_bxs[runidx]->Fill(bx_,totalFC12);
   }
 
   // Loop over histograms and get bxs
   vector< vector<int> > selectedbxs(Nrun, vector<int>());
-
   for(unsigned int ihist=0; ihist<h_bxs.size(); ihist++){
 
     if((ihist%1)==0){
       if (isatty(1)) {
-	printf("\r[HF Timing] Extracting Fill Scheme: %i / %i (%i%%)",ihist,(int)h_bxs.size(),(int)((float)ihist/(float)h_bxs.size()*100));
+	printf("\r[HF Timing] Extracting fill scheme: %i / %i (%i%%)",ihist,(int)h_bxs.size(),static_cast<int>((ihist)*100./h_bxs.size()));
 	fflush(stdout);
-	if(ihist+1>=h_bxs.size()) printf("\n");
+	if(ihist+1>=h_bxs.size()){
+	  printf("\r[HF Timing] Extracting fill scheme: %i / %i (%i%%)",ihist+1,(int)h_bxs.size(),static_cast<int>((ihist+1)*100./h_bxs.size()));
+	  fflush(stdout);
+	  printf("\n");
+	}
       }
-    }        
+    }
     
     for(int ibx=1; ibx<=3563; ibx++){   // account for th2 binning starting at 1
       
       bool isfirst=false, islast=false;
       
       double intbx = h_bxs[ihist]->Integral(ibx,ibx,1,3563);
-      double intbx_prev = h_bxs[ihist]->Integral(ibx-1,ibx-1,1,3563)+h_bxs[ihist]->Integral(ibx-2,ibx-2,1,3563);
-      double intbx_next = h_bxs[ihist]->Integral(ibx+1,ibx+1,1,3563)+h_bxs[ihist]->Integral(ibx+2,ibx+2,1,3563);
-      
-      if(intbx/(intbx_prev+intbx_next)<0.01) // if empty bunch
-	continue;
-      if(intbx_prev/intbx<0.01) //if prev two bunches empty
-	isfirst=true;
-      if(intbx_next/intbx<0.01) //if next two bunches empty
-	islast=true;
-      
+      double intbx_prev1 = h_bxs[ihist]->Integral(ibx-1,ibx-1,1,3563);
+      double intbx_prev2 = h_bxs[ihist]->Integral(ibx-2,ibx-2,1,3563);
+      double intbx_next1 = h_bxs[ihist]->Integral(ibx+1,ibx+1,1,3563);
+      double intbx_next2 = h_bxs[ihist]->Integral(ibx+2,ibx+2,1,3563);
+
+      // Three methods to try
+      // 1. Individual comparison: Charge[i]/Charge[i+1]<0.1 && Charge[i]/Charge[i+2]<0.1 && ... 
+      // 2. Summed comparison: Charge[i]/(Charge[i+1]+Charge[i+2]+...)<0.1
+      // 3. Averaged comparison: (n*Charge[i])/(Charge[i+1]+Charge[i+2]+...Charge[i+n])<0.1
+
+      if(intbx_prev1/intbx<0.01 && intbx_prev2/intbx<0.01) //if prev two bunches empty
+      	isfirst=true;
+      if(intbx_next1/intbx<0.01 && intbx_next2/intbx<0.01) //if next two bunches empty
+      	islast=true;
+
       if(isfirst&&islast && bxtype=="iso")
 	selectedbxs[ihist].push_back(ibx-1);
       else if(isfirst && !islast && bxtype=="first")
@@ -501,16 +478,26 @@ vector< vector<int> > findFillScheme(TChain* ch, TString bxtype="iso"){
 	selectedbxs[ihist].push_back(ibx-1);
     }
   }
-
-  /*  cout<<"Printing bxs"<<endl;
-  cout<<"Nruns = "<<selectedbxs.size()<<endl;
-  for(unsigned int i=0;i<selectedbxs.size();i++){
-    cout<<"Nbxs = "<<selectedbxs[0].size()<<endl;
-    for(unsigned int j=0;j<selectedbxs[i].size();j++){
-      cout<<"bx["<<i<<"]["<<j<<"] = "<<selectedbxs[i][j]<<endl;
-    }
-    }*/
     
+  if(printbx){
+    ofstream file(outdir+"fillscheme.txt");
+    for(unsigned int i=0;i<selectedbxs.size();i++){
+      file<<"Run: "<<run[i]<<", Nbxs: "<<selectedbxs[i].size()<<endl;
+      for(unsigned int j=0;j<selectedbxs[i].size();j++){
+	file<<"bx["<<i<<"]["<<j<<"] = "<<selectedbxs[i][j]<<endl;
+      }
+    }
+    file.close();
+    cout<<"[HF Timing] Writing bxs: fillscheme.txt"<<endl;      
+  }
+  
+  time(&endtime);
+  int seconds = difftime(endtime, begtime);
+  float hertz = nentries; hertz /= seconds;
+
+  cout<<"[HF Timing] Found fill scheme in "<<seconds<<" seconds ("<<hoursMinSec(seconds)<<") for "<<addCommas(nentries)
+      <<" events -> "<<roundNumber(hertz,1,1000)<<" kHz, "<<roundNumber(1000,2,hertz)<<" ms per event"<<endl<<endl;
+
   return selectedbxs;
 }
 
@@ -538,32 +525,11 @@ void makeTextFile(TH1F* timing[][4], int ieta){
   name += ".txt";
 
   ofstream file(outdir+name);
-  for(int i=0; i<Nrun; i++){
+  for(unsigned int i=0; i<Nrun; i++){
     //run declared up top
     file<<run[i]<<", "<<timing[i][0]->GetMean()<<", "<<timing[i][0]->GetMeanError()<<endl;
   }
   file.close();
 
-  cout<<"Written to "<<outdir+name<<endl;
-}
-
-
-// h1 cosmetics
-void h1cosmetic(TH1F* &h1, int linecolor=kBlack, int linewidth=1, int fillcolor=0){
-    h1->SetLineColor(linecolor);
-    h1->SetLineWidth(linewidth);
-    h1->SetMarkerColor(linecolor);
-    h1->SetFillColor(fillcolor);
-    h1->SetStats(0);
-    h1->SetMinimum(0.1);
-}
-
-
-// h2 cosmetics
-void h2cosmetic(TH2F* &h2, char* title, TString Xvar="", TString Yvar="", TString Zvar="Events/bin"){
-    h2->SetTitle(title);
-    h2->SetXTitle(Xvar);
-    h2->SetYTitle(Yvar);
-    h2->SetZTitle(Zvar);
-    h2->SetStats(0);
+  cout<<"[HF Timing] Writing values: "<<name<<endl;
 }
