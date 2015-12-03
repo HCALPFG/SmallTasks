@@ -33,28 +33,27 @@ TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/"+which_bx+"/fc"
 
 TChain* ch = new TChain("hcalTupleTree/tree");
 
-vector<unsigned int> run  = { //254790,254852,254879,254906,254907,254914,                                           // 2015C
-			      //			      256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D
-			      //			      257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968,
-			      //			      257969,258157,258158,258159,
-			      258177,258656,258694,258702,258703,258705,258706,258712,
-			      258713,258742,258745,258749,258750
+vector<unsigned int> run  = { 254790,254852,254879,254906,254907,254914,                                           // 2015C
+			      256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D.1
+			      257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968, // 2015D.2
+			      257969,258157,258158,258159,
+			      258177,258656,258694,258702,258703,258705,258706,258712,258713,258742,258745,258749, // 2015D.3
+			      258750,
 			      
-			      //			      259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
-			      //			      259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431
+			      259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
+			      259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431,
 
-			      // 259626,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820,259821, // 2015D
-			      //			      259822,259862,259890,259891,260373,260427,260431,260532,260533,260534,260536,260538,
-			      //			      260541,260575,260576,260577,260593,260627
+			      259626,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820,259821, // 2015D.4
+			      259822,259862,259890,259891,                                                         
+			      260373,                                                                              // 2015D.5
+			      260427,260431,260532,260533,260534,260536,260538,260541,260575,260576,260577,260593, // 2015D.6
+			      260627
                              }; //End of 2015 pp collisions
 
 const unsigned int Nrun=run.size();
 
-//int Ethres[4]={fc_thresh.Atoi(),100000,100001,100002};
-int Ethres[4]={50,100000,100001,100002};
+int Ethres[4]={fc_thresh.Atoi(),100000,100001,100002};
 //int Ethres[4]={50,100,150,200};
-//if(fcthresh=="binned"){  Ethres[0]=0; Ethresh[1]=50; Ethresh[2]=100; Ethresh[3]=150;}
-//if(fcthresh=="test"){  Ethres[0]=50; Ethresh[1]=100000; Ethresh[2]=100001; Ethresh[3]=100002;}
 
 int HistColor[4]={kBlack,kRed,kBlue,kGreen};
 bool DoNorm=false;
@@ -65,14 +64,14 @@ void HFTiming(){
   gROOT->SetBatch(true);  //Don't show canvases
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
 
-  //  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
-  //  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
+  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
+  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
   ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
-  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
-  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
-  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
-  //  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
-
+  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
+  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
+  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
+  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
+  
   int dir = gSystem->mkdir(outdir,true);
   if(dir==0){
     cout<<"\n[HF Timing] Configuration: Created directory: "<<outdir<<"\n"<<endl;
