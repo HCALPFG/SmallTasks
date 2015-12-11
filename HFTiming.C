@@ -27,8 +27,8 @@
 
 #include "HFTiming.h"
 
-TString fc_thresh = "test";
-TString which_bx = "first"; //Choose "iso", "first", or "last" (in a train)
+TString fc_thresh = "50";
+TString which_bx = "all"; //Choose "all","iso", "first", "middle", or "last" (in a train)
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/"+which_bx+"/fc"+fc_thresh+"/";
 
 TChain* ch = new TChain("hcalTupleTree/tree");
@@ -48,7 +48,7 @@ vector<unsigned int> run  = { 254790,254852,254879,254906,254907,254914,        
 			      260373,                                                                              // 2015D.5
 			      260427,260431,260532,260533,260534,260536,260538,260541,260575,260576,260577,260593, // 2015D.6
 			      260627
-                             }; //End of 2015 pp collisions
+			      }; //End of 2015 pp collisions
 
 const unsigned int Nrun=run.size();
 
@@ -71,7 +71,7 @@ void HFTiming(){
   ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
   ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
   ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
-  
+
   int dir = gSystem->mkdir(outdir,true);
   if(dir==0){
     cout<<"\n[HF Timing] Configuration: Created directory: "<<outdir<<"\n"<<endl;
@@ -96,7 +96,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
 
   // histograms
   TH1F *h1[Nrun][4], *h2[Nrun][4], *h12[Nrun][4], *h2over12[Nrun][4], *ht[Nrun][4], *h1over2[Nrun][4], *havgtime[Nrun][4]; 
-  TProfile *h2profile[Nrun][4];
+  TProfile *h2profile[Nrun][4], *hshape[Nrun][4];
 
   for(unsigned int irun=0; irun<Nrun; irun++){
     for(int i=0; i<4; i++){
@@ -112,7 +112,8 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
       h1over2[irun][i]   = new TH1F(Form("h1over2_run%i_E%iTo%i", run[irun],    Ethreslow,Ethreshigh),  Form("TS%i/TS%i",TSadjacent,TStoCheck),                  20, 0, 5);
       havgtime[irun][i]  = new TH1F(Form("havgtime_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "Energy-avg timinig (in the unit of TS)",                30, 0, 3);
       h2profile[irun][i]  = new TProfile(Form("h2profile_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "h2profile",        1000,0,1000,0,1);
-        
+      hshape[irun][i]  = new TProfile(Form("hshape_run%i_E%iTo%i", run[irun],   Ethreslow,Ethreshigh),  "hshape",        10,0,10,0,500);
+
       h1[irun][i]->Sumw2();
       h2[irun][i]->Sumw2();
       h12[irun][i]->Sumw2();
@@ -211,7 +212,8 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
 	h1over2[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TSadjacent)/HFDigiFC_->at(ich).at(TStoCheck),4.999));
 	h2over12[ithisrun][i]->Fill(Min(HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck)),9.999));
 	h2profile[ithisrun][i]->Fill(ls_, HFDigiFC_->at(ich).at(TStoCheck)/(HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))); 
-                
+        for(unsigned int iTS=0; iTS<HFDigiFC_->at(ich).size(); iTS++)
+          hshape[ithisrun][i]->Fill(iTS,HFDigiFC_->at(ich).at(iTS),HFDigiFC_->at(ich).at(iTS));                
 
 	// energy average timing (considering only TS1 and TS2) 
 	float avgtime=1; 
@@ -239,6 +241,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
 	h1over2[irun][i]->Scale(1./h1over2[irun][i]->Integral());
 	h2over12[irun][i]->Scale(1./h2over12[irun][i]->Integral());
 	havgtime[irun][i]->Scale(1./havgtime[irun][i]->Integral());
+	hshape[irun][i]->Scale(1./hshape[irun][i]->Integral());
       }
     }
   }
@@ -321,6 +324,14 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
     cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
 	
     delete cprofile;
+
+    TCanvas *cshape = new TCanvas("cshape", "cshape", 600, 400);
+    cshape->cd(1);
+    hshape[irun][0]->Draw();
+    if(hshape[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing Local]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
+    cshape->Print(Form(outdir+"/SHAPE_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+
+    delete cshape;
   }
 
   //
@@ -367,6 +378,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
       delete h2over12[irun][i]; 
       delete havgtime[irun][i]; 
       delete h2profile[irun][i]; 
+      delete hshape[irun][i];
     } 
   }
   delete hsummary; 
@@ -383,8 +395,8 @@ vector< vector<int> > findFillScheme(TChain *ch, TString bxtype="iso", bool prin
   time_t begtime, endtime;
   time(&begtime);
 
-  if(bxtype!="iso" && bxtype!="first" && bxtype!="last")
-    cout<<"Fill scheme type invalid. bxtype must be \"iso\", \"first\", or \"last\""<<endl;  
+  if(bxtype!="all" && bxtype!="iso" && bxtype!="first" && bxtype!="last")
+    cout<<"\e[31m[HF Timing]\e[0m WARNING: Fill scheme type invalid. bxtype must be \"all\", \"iso\", \"first\", \"middle\", or \"last\""<<endl;  
 
   unsigned int   run_ = 0;
   ch->SetBranchAddress("run", &run_);
@@ -469,9 +481,13 @@ vector< vector<int> > findFillScheme(TChain *ch, TString bxtype="iso", bool prin
       if(intbx_next1/intbx<0.01 && intbx_next2/intbx<0.01) //if next two bunches empty
       	islast=true;
 
-      if(isfirst&&islast && bxtype=="iso")
+      if(bxtype=="all")
+	selectedbxs[ihist].push_back(ibx-1);
+      else if(isfirst&&islast && bxtype=="iso")
 	selectedbxs[ihist].push_back(ibx-1);
       else if(isfirst && !islast && bxtype=="first")
+	selectedbxs[ihist].push_back(ibx-1);
+      else if(!(isfirst || islast) && bxtype=="middle")
 	selectedbxs[ihist].push_back(ibx-1);
       else if(islast && !isfirst && bxtype=="last")
 	selectedbxs[ihist].push_back(ibx-1);
