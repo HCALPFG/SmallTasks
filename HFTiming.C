@@ -27,28 +27,37 @@
 
 #include "HFTiming.h"
 
-TString fc_thresh = "50";
-TString which_bx = "all"; //Choose "all","iso", "first", "middle", or "last" (in a train)
-TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/"+which_bx+"/fc"+fc_thresh+"/";
+TString dataset = "ZeroBias";
+TString which_bx = "iso"; //Choose "all","iso", "first", "middle", or "last" (in a train)
+TString fc_thresh = "100";
+TString runset = "Run2016B";
+
+
+TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/2016/"+dataset+"/"+which_bx+"/fc"+fc_thresh+"/"+runset+"/";
 
 TChain* ch = new TChain("hcalTupleTree/tree");
 
-vector<unsigned int> run  = { 254790,254852,254879,254906,254907,254914,                                           // 2015C
-			      256630,256675,256676,256677,256801,256843,256867,256868,256926,256941,257461,257531, // 2015D.1
-			      257599,257613,257645,257682,257722,257723,257735,257751,257805,257816,257819,257968, // 2015D.2
-			      257969,258157,258158,258159,
-			      258177,258656,258694,258702,258703,258705,258706,258712,258713,258742,258745,258749, // 2015D.3
-			      258750,
-			      
-			      259152,259157,259158,259159,259161,259162,259163,259164,259167,259199,259200,259201, // Totem
-			      259207,259208,259236,259237,259351,259352,259384,259385,259388,259399,259429,259431,
+vector<unsigned int> run  = {   
+  /*  271024, 271025, 271026, 271027, 271034, 271036, 271037, 271044, 271045, 271046, //2016A-v1
+  271047, 271048, 271049, 271050, 271052, 271056, 271064, 271068, 271071, 271074,
+  271075, 271076, 271077, 271080, 271081, 271082, 271083, 271084, 271087, 271089,
+  271190, 271191, 271192, 271193, 271195, 271196, 271197, 271213, 271214, 271215,
+  271216, 271217, 271219, 271220, 271221, 271228, 271230, 271231, 271276, 271291,
+  271304, 271305, 271306, 271307, 271310, 271312, 271313, 271314, 271317, 271318,
+  271319, 271321, 271322, 271323, 271324, 271327, 271328, 271329, 271330, 271331,
+  271332, 271336, 271337, 271338, 271342, 271628, 271634, 271643, 271644, 271645, 
+  271646, 271648, 271649, 271652, 271653, 271654, 271656, 271658*/
 
-			      259626,259681,259683,259685,259686,259721,259809,259810,259811,259818,259820,259821, // 2015D.4
-			      259822,259862,259890,259891,                                                         
-			      260373,                                                                              // 2015D.5
-			      260427,260431,260532,260533,260534,260536,260538,260541,260575,260576,260577,260593, // 2015D.6
-			      260627
-			      }; //End of 2015 pp collisions
+  272760, 272761, 272762, 272774, 272775, 272776, 272782, 272783, 272784, 272785, //2016B-v1
+  272786, 272798, 272811, 272812, 272814, 272815, 272816, 272818, 272827, 272828, 
+  272930, 272936, 273013, 273017,
+  273150, 273158, 273290, 273291, 273292, 273294, 273295, 273299, 273301, 273302, //2016B-v2
+  273402, 273403, 273404, 273405, 273406, 273407, 273408, 273409, 273410, 273411, 
+  273425, 273426, 273445, 273446, 273447, 273448, 273449, 273450, 273492, 273493, 
+  273494, 273502, 273503, 273523, 273526, 273537, 273554, 273555, 273589, 273590, 
+  273592, 273725, 273728, 273730
+
+}; //End of Run List
 
 const unsigned int Nrun=run.size();
 
@@ -64,13 +73,17 @@ void HFTiming(){
   gROOT->SetBatch(true);  //Don't show canvases
   gErrorIgnoreLevel=1001; //Don't print message about canvas being saved
 
-  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015C-v1_RAW/*.root");
-  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW/*.root");
-  ch->Add("/afs/cern.ch/user/j/jaehyeok/public/JetHT_Run2015D-v1_RAW_258177_258750/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/ZeroBias_Run2015D-v1_RAW_259152_259431/*.root"); // Totem
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_259626_259891/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260373_260426/*.root");
-  ch->Add("/afs/cern.ch/work/r/rbhandar/public/hcaltuples/JetHT_Run2015D-v1_RAW_260427_260627/*.root");
+  if(dataset=="ZeroBias"){
+    //    ch->Add("~/Work/public/hcaltuples/2016/ZeroBias1_Run2016A-v1_RAW/*.root");
+    //    ch->Add("~/Work/public/hcaltuples/2016/ZeroBias2_Run2016A-v1_RAW/*.root");
+    ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v1_RAW_DCS_272023_273146/*.root");
+    ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
+  }
+  else if(dataset=="JetHT"){
+    ch->Add("~/Work/public/hcaltuples/2016/JetHT_Run2016B-v1_RAW_DCS_272023_273146/*.root");
+    ch->Add("~/Work/public/hcaltuples/2016/JetHT_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
+  }
+
 
   int dir = gSystem->mkdir(outdir,true);
   if(dir==0){
@@ -81,10 +94,13 @@ void HFTiming(){
     cout<<"\n[HF Timing] Configuration: Saving to "<<outdir<<"\n"<<endl;
 
   //Analysis
-  vector< vector<int> > fillScheme = findFillScheme(ch, which_bx, true);
+  //  vector< vector<int> > fillScheme = findFillScheme(ch, which_bx, true);
+  vector< vector<int> > fillScheme;
 
   HFTimingOne(fillScheme, 2, 1, 41, 3, 2);
   HFTimingOne(fillScheme, 2, 1, -41, 3, 2);
+
+  cout<<"\n[HF Timing] Plots available at "<<outdir<<"\n"<<endl;
 }
 
 // Main Looper
@@ -146,29 +162,9 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
       }
     }        
 	
-    // Choose bunch crossings
-    if(!isGoodBX(run_, bx_, goodbxs)) continue;
 
-    // Skip List
-    if((run_>=254231 && run_<=254323)) continue;           // Pre-calibration
-    if((run_>=256673 && run_<=256674)) continue;           // No Entries
-    if(run_==256842) continue;                             // No Entries
-    if(run_==256866) continue;                             // Low stats
-    if(run_==256869) continue;                             // Low stats
-    if(run_==257614) continue;                             // Low stats
-    if(run_==257804) continue;                             // Low stats
-    if(run_==258129) continue;                             // Low stats
-    if(run_==258136) continue;                             // Low stats
-    if((run_>=258211 && run_<=258448)) continue;           // No iso bx
-    if(run_==258655) continue;                             // No Entries
-    if(run_==258714) continue;                             // Low stats
-    if(run_==258741) continue;                             // Low stats
-    if(run_==259158) continue;                             // Low stats
-    if(run_==259637) continue;                             // Low stats
-    if(run_==259813) continue;                             // Low stats
-    if(run_==259817) continue;                             // Low stats
-    if(run_==260425) continue;                             // No iso bx
-    if(run_==260426) continue;                             // No iso bx
+    //    if(!isGoodBX(run_, bx_, goodbxs)) continue;
+    if(bx_!=1) continue;
 
     // loop over channels
     for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++){ 
@@ -314,22 +310,22 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
     //cout << Form("RUN=%i IETA=%i IPHI=%i DEPTH=%i",run[irun],IETA,IPHI,DEPTH) << endl;
     //cout << "Peak : " << havgtime[irun][0]->GetMean() << " +/- " << havgtime[irun][0]->GetRMS()<< endl;
 
-    c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+    c->Print(Form(outdir+"/RUN%i_IETA%i_IPHI%i_DEPTH%i.png",run[irun],IETA,IPHI,DEPTH));
     delete c;
         
     TCanvas *cprofile = new TCanvas("cprofile", "cprofile", 600, 400);
     cprofile->cd(1);
     h2profile[irun][0]->Draw();
     if(h2profile[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
-    cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+    cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.png",run[irun],IETA,IPHI,DEPTH));
 	
     delete cprofile;
 
     TCanvas *cshape = new TCanvas("cshape", "cshape", 600, 400);
     cshape->cd(1);
     hshape[irun][0]->Draw();
-    if(hshape[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing Local]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
-    cshape->Print(Form(outdir+"/SHAPE_RUN%i_IETA%i_IPHI%i_DEPTH%i.pdf",run[irun],IETA,IPHI,DEPTH));
+    if(hshape[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
+    cshape->Print(Form(outdir+"/SHAPE_RUN%i_IETA%i_IPHI%i_DEPTH%i.png",run[irun],IETA,IPHI,DEPTH));
 
     delete cshape;
   }
@@ -353,6 +349,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
     hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));
 
   } 
+  gStyle->SetPadTickY(2);
   TCanvas *csum = new TCanvas("csum", "csum", 1200, 400);
   csum->cd(1);
   csum->SetGridy(1);
@@ -361,7 +358,7 @@ void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck = 2, int TSadjacen
   hsummary->SetMarkerStyle(20);
   hsummary->SetMarkerSize(1);
   hsummary->Draw("ep");
-  csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.pdf",IETA,IPHI,DEPTH));
+  csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.png",IETA,IPHI,DEPTH));
   csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.root",IETA,IPHI,DEPTH));
 
   delete csum;
