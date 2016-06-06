@@ -49,8 +49,8 @@ void h2cosmetic(TH2F* &h2, char* title, TString Xvar, TString Yvar, TString Zvar
   h2->SetZTitle(Zvar);
   h2->SetStats(0);
 }
-void HFTimingOne(vector< vector<int> > goodbxs, int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
-vector< vector<int> > findFillScheme(TChain* ch, TString bxtype, bool printbx);
+void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck, int TSadjacent, int IETA, int IPHI, int DEPTH);
+
 TString hoursMinSec(long seconds){
   int minutes((seconds/60)%60), hours(seconds/3600);
   TString hhmmss("");
@@ -63,14 +63,32 @@ TString hoursMinSec(long seconds){
 
   return hhmmss;
 }
-bool isGoodBX(int run_num, int bx, vector< vector<int> > fillscheme);
-void makeTextFile(TH1F* timing[][4], int ieta);
+
+//Print all the values for the summary plot
+void makeTextFile(TH1F* timing[][4], int ieta, vector<unsigned int> run,  TString outdir){
+
+  TString name = "HFp_Timing";
+  if(ieta<0) name = "HFm_Timing";
+  name += ".txt";
+
+  ofstream file(outdir+name);
+  for(unsigned int i=0; i<run.size(); i++){
+    //run declared up top
+    file<<run[i]<<", "<<timing[i][0]->GetMean()<<", "<<timing[i][0]->GetMeanError()<<endl;
+  }
+  file.close();
+
+  cout<<"[HF Timing] Writing values: "<<name<<endl;
+}
+
 float Max(float a, float b){ 
   return a >= b ? a : b;
 }
+
 float Min(float a, float b){ 
   return a <= b ? a : b; 
 }
+
 TString roundNumber(double num, int decimals, double denom){
   if(denom==0) return " - ";
   double neg = 1; if(num*denom<0) neg = -1;
@@ -118,4 +136,3 @@ void init_chain(TChain *ch){
   ch->SetBranchAddress("HFDigiPedFC", &HFDigiPedFC_, &b_HFDigiPedFC);
   ch->SetBranchAddress("HFDigiNomFC", &HFDigiNomFC_, &b_HFDigiNomFC);
 }
-
