@@ -39,8 +39,8 @@ vector<vector<bool> > getFillSchemes(map<unsigned int,int> fillmap, vector<unsig
 map<unsigned int, vector<int> > selectBXs(vector<unsigned int> runs, vector<vector<bool> > schemes, TString bxtype){
   cout<<"[HF Timing] Selecting "<<bxtype<<" bxs..."<<endl;
   
-  if(bxtype!="iso" && bxtype!="first" && bxtype!="last" && bxtype!="middle" && bxtype!="noniso"){
-    cout<<"\n\e[31m[HF Timing]\e[0m WARNING: Not valid bx type!"<<endl;
+  if(bxtype!="iso" && bxtype!="first" && bxtype!="last" && bxtype!="middle" && bxtype!="noniso" && bxtype!="all"){
+    cout<<"\n\e[31m[HF Timing]\e[0m ERROR: Not valid bx type!"<<endl;
     exit(0);
   }
   
@@ -62,6 +62,8 @@ map<unsigned int, vector<int> > selectBXs(vector<unsigned int> runs, vector<vect
 	else if(bxtype=="middle" && schemes[irun][ibx-1] && schemes[irun][ibx+1])
 	  tmp_bxs.push_back(ibx);
 	else if(bxtype=="noniso" && !(!schemes[irun][ibx-1] && !schemes[irun][ibx+1]))
+	  tmp_bxs.push_back(ibx);
+	else if(bxtype=="all")
 	  tmp_bxs.push_back(ibx);
       }
     }

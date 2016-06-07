@@ -32,12 +32,16 @@
 #include "HFTiming.h"
 
 TString dataset = "ZeroBias";
-TString which_bx = "iso"; //Choose "all","iso", "first", "middle", or "last" (in a train)
+TString which_bx = "iso"; //Choose "all","iso", "first", "middle", "last", or "noniso"
 TString fc_thresh = "50";
 TString runset = "Run2016B";
 
+bool doPUVeto = false;
+TString pu_fcthresh; //Set below if doPUVeto true
+
+
 TString filldir="fillschemes/";
-TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/2016/"+dataset+"/"+which_bx+"/fc"+fc_thresh+"/"+runset+"/test/";
+TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/2016/"+dataset+"/"+which_bx+"_fc"+fc_thresh+"/"+runset+"/";
 
 TChain* ch = new TChain("hcalTupleTree/tree");
 
@@ -49,8 +53,11 @@ map<unsigned int,int> fillmap = {
   {273402,4924}, {273403,4924}, {273404,4924}, {273405,4924}, {273406,4924}, {273407,4924}, {273408,4924}, {273409,4924}, {273410,4924}, {273411,4924},
   {273425,4925}, {273426,4925}, {273445,4926}, {273446,4926}, {273447,4926}, {273448,4926}, {273449,4926}, {273450,4926}, {273492,4930}, {273493,4930},
   {273494,4930}, {273502,4935}, {273503,4935}, {273523,4937}, {273526,4937}, {273537,4937}, {273554,4942}, {273555,4942}, {273589,4945}, {273590,4945}, 
-  {273592,4945}, {273725,4947}, {273728,4947}, {273730,4947}
+  {273592,4945}, {273725,4947}, {273728,4947}, {273730,4947}, {274094,4953}, {274100,4954}, {274102,4954}, {274103,4954}, {274104,4954}, {274105,4954},
+  {274106,4954}, {274107,4954}, {274108,4954}, {274142,4956}, {274146,4956}, {274157,4958}, {274159,4958}, {274160,4958}, {274161,4958}, {274172,4960},
+  {274198,4961}, {274199,4961}, {274200,4961}, {274240,4964}, {274241,4964}, {274243,4964}, {274244,4964}, {274250,4965}, {274251,4965}
 };
+
 const unsigned int Nrun=fillmap.size();
 vector<unsigned int> run;
 
@@ -70,6 +77,7 @@ void HFTiming(){
     if(runset=="Run2016B"){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v1_RAW_DCS_272023_273146/*.root");
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274094_274250/*.root");    
     }
   }
   else if(dataset=="JetHT"){
@@ -77,6 +85,12 @@ void HFTiming(){
       ch->Add("~/Work/public/hcaltuples/2016/JetHT_Run2016B-v1_RAW_DCS_272023_273146/*.root");
       ch->Add("~/Work/public/hcaltuples/2016/JetHT_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
     }
+  }
+
+  if(doPUVeto){
+    pu_fcthresh = "10";
+    outdir.ReplaceAll("2016/","2016/Pileup/");
+    outdir.ReplaceAll("_fc"+fc_thresh+"/","_fc"+fc_thresh+"_pu"+pu_fcthresh+"/");
   }
 
   int dir = gSystem->mkdir(outdir,true);
@@ -164,7 +178,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     
     //Check if bx of interest
     if(!isSelectedBX(selectedBXs[run_], bx_)) continue;
-
+    
     // loop over channels
     for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++){ 
       // Selected only interesting channel
@@ -173,18 +187,11 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
       // Fill histograms 
       for(int i=0; i<4; i++){  // for different E or Q cuts
 	if(i<3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i] || 
-		   (HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))>Ethres[i+1]) ) continue;
-	if(i==3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i]) ) continue;
-
-	if(0){ // DEBUG
-	  cout << Form("[HF Timing] Subdet=%i IEta=%i IPhi=%i Depth=%i RecEnergy=%.3f\n",
-		       HFDigiSubdet_->at(ich), 
-		       HFDigiIEta_->at(ich),    
-		       HFDigiIPhi_->at(ich),    
-		       HFDigiDepth_->at(ich),   
-		       HFDigiRecEnergy_->at(ich) ); 
-	} 
-                
+		   (HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))>Ethres[i+1])) continue;
+	if(i==3 && ((HFDigiFC_->at(ich).at(TSadjacent)+HFDigiFC_->at(ich).at(TStoCheck))<Ethres[i])) continue;
+	if(doPUVeto)
+	  if((HFDigiFC_->at(ich).at(0)+HFDigiFC_->at(ich).at(3))>=pu_fcthresh.Atoi()) continue;
+	
 	//Make sure this run is part of the run vector above
 	int ithisrun=-1;
 	for(unsigned int irun=0; irun<Nrun; irun++) 
@@ -330,7 +337,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
   for(unsigned int irun=0; irun<Nrun; irun++){   
     hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
     hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
-    hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-250000)));  
+    hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
     hsummary->GetXaxis()->SetLabelSize(0.06);  
     hsummary->GetXaxis()->LabelsOption("v");
     hsummary->GetYaxis()->SetTitle("<Q2/(Q1+Q2)>");
