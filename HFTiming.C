@@ -32,13 +32,12 @@
 #include "HFTiming.h"
 
 TString dataset = "ZeroBias";
-TString which_bx = "iso"; //Choose "all","iso", "first", "middle", "last", or "noniso"
-TString fc_thresh = "50";
+TString which_bx = "noniso"; //Choose "all","iso", "first", "middle", "last", or "noniso"
+TString fc_thresh = "100";
 TString runset = "Run2016B";
 
-bool doPUVeto = false;
-TString pu_fcthresh; //Set below if doPUVeto true
-
+bool doPUVeto = true;
+TString pu_fcthresh; //Is set below if doPUVeto true
 
 TString filldir="fillschemes/";
 TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/2016/"+dataset+"/"+which_bx+"_fc"+fc_thresh+"/"+runset+"/";
@@ -55,7 +54,10 @@ map<unsigned int,int> fillmap = {
   {273494,4930}, {273502,4935}, {273503,4935}, {273523,4937}, {273526,4937}, {273537,4937}, {273554,4942}, {273555,4942}, {273589,4945}, {273590,4945}, 
   {273592,4945}, {273725,4947}, {273728,4947}, {273730,4947}, {274094,4953}, {274100,4954}, {274102,4954}, {274103,4954}, {274104,4954}, {274105,4954},
   {274106,4954}, {274107,4954}, {274108,4954}, {274142,4956}, {274146,4956}, {274157,4958}, {274159,4958}, {274160,4958}, {274161,4958}, {274172,4960},
-  {274198,4961}, {274199,4961}, {274200,4961}, {274240,4964}, {274241,4964}, {274243,4964}, {274244,4964}, {274250,4965}, {274251,4965}
+  {274198,4961}, {274199,4961}, {274200,4961}, {274240,4964}, {274241,4964}, {274243,4964}, {274244,4964}, {274250,4965}, {274251,4965}, {274282,4976}, 
+  {274283,4976}, {274284,4976}, {274285,4976}, {274286,4976}, {274314,4979}, {274315,4979}, {274316,4979}, {274317,4979}, {274318,4979}, {274319,4979},
+  {274335,4980}, {274336,4980}, {274337,4980}, {274338,4980}, {274339,4980}, {274344,4980}, {274345,4980}, {274382,4984}, {274387,4895}, {274388,4895},
+  {274420,4988}, {274421,4988}, {274422,4988}, {274440,4990}, {274441,4990}, {274442,4990}, {274443,4990}
 };
 
 const unsigned int Nrun=fillmap.size();
@@ -78,6 +80,7 @@ void HFTiming(){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v1_RAW_DCS_272023_273146/*.root");
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274094_274250/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274282_274443/*.root");    
     }
   }
   else if(dataset=="JetHT"){
@@ -318,7 +321,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     TCanvas *cprofile = new TCanvas("cprofile", "cprofile", 600, 400);
     cprofile->cd(1);
     h2profile[irun][0]->Draw();
-    if(h2profile[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
+    if(h2profile[irun][0]->GetEntries()<10) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
     cprofile->Print(Form(outdir+"/Profile_RUN%i_IETA%i_IPHI%i_DEPTH%i.png",run[irun],IETA,IPHI,DEPTH));
 	
     delete cprofile;
@@ -326,7 +329,6 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     TCanvas *cshape = new TCanvas("cshape", "cshape", 600, 400);
     cshape->cd(1);
     hshape[irun][0]->Draw();
-    if(hshape[irun][0]->GetEntries()<=11) cout<<"\e[31m[HF Timing]\e[0m WARNING: Low stats run = "<<run[irun]<<endl;
     cshape->Print(Form(outdir+"/SHAPE_RUN%i_IETA%i_IPHI%i_DEPTH%i.png",run[irun],IETA,IPHI,DEPTH));
 
     delete cshape;
@@ -335,8 +337,10 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
   // Make a summary plot 
   TH1F *hsummary = new TH1F("hsummary",  "hsummary", Nrun, 0, Nrun); 
   for(unsigned int irun=0; irun<Nrun; irun++){   
-    hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
-    hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
+    if(h2over12[irun][0]->GetEntries()>=10){
+      hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
+      hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
+    }
     hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
     hsummary->GetXaxis()->SetLabelSize(0.06);  
     hsummary->GetXaxis()->LabelsOption("v");
@@ -346,7 +350,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     hsummary->GetYaxis()->SetLabelSize(0.06);  
     hsummary->SetStats(0);
     hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));
-
+    
   } 
   gStyle->SetPadTickY(2);
   TCanvas *csum = new TCanvas("csum", "csum", 1200, 400);
@@ -359,11 +363,11 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
   hsummary->Draw("ep");
   csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.png",IETA,IPHI,DEPTH));
   csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.root",IETA,IPHI,DEPTH));
-
+  
   delete csum;
 
   makeTextFile(h2over12, IETA, run, outdir);
-    
+  
   // clean 
   for(unsigned int irun=0; irun<Nrun; irun++) {
     for(int i=0; i<4; i++){
