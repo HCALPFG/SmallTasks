@@ -29,13 +29,13 @@
 #include "TTree.h"
 
 #include "FillScheme.h"
+#include "FillMaps.h"
 #include "HFTiming.h"
 
 TString dataset = "ZeroBias";
-TString which_bx = "noniso"; //Choose "all","iso", "first", "middle", "last", or "noniso"
+TString which_bx = "all"; //Choose "all","iso", "first", "middle", "last", or "noniso"
 TString fc_thresh = "100";
-TString runset = "Run2016B";
-
+TString runset = "Run2016C";
 bool doPUVeto = true;
 TString pu_fcthresh; //Is set below if doPUVeto true
 
@@ -44,30 +44,7 @@ TString outdir ="/afs/cern.ch/user/r/rbhandar/www/hcal/hftiming/2016/"+dataset+"
 
 TChain* ch = new TChain("hcalTupleTree/tree");
 
-map<unsigned int,int> fillmap = {
-  {272760,4888}, {272761,4888}, {272762,4888}, {272774,4889}, {272775,4889}, {272776,4889}, {272782,4890}, {272783,4890}, {272784,4890}, {272785,4890}, //2016B-v1
-  {272786,4890}, {272798,4892}, {272811,4895}, {272812,4895}, {272814,4895}, {272815,4895}, {272816,4895}, {272818,4895}, {272827,4896}, {272828,4896}, 
-  {272930,4905}, {272936,4906}, {273013,4910}, {273017,4910},
-  {273150,4915}, {273158,4915}, {273290,4919}, {273291,4919}, {273292,4919}, {273294,4919}, {273295,4919}, {273299,4919}, {273301,4919}, {273302,4919}, //2016B-v2
-  {273402,4924}, {273403,4924}, {273404,4924}, {273405,4924}, {273406,4924}, {273407,4924}, {273408,4924}, {273409,4924}, {273410,4924}, {273411,4924},
-  {273425,4925}, {273426,4925}, {273445,4926}, {273446,4926}, {273447,4926}, {273448,4926}, {273449,4926}, {273450,4926}, {273492,4930}, {273493,4930},
-  {273494,4930}, {273502,4935}, {273503,4935}, {273523,4937}, {273526,4937}, {273537,4937}, {273554,4942}, {273555,4942}, {273589,4945}, {273590,4945}, 
-  {273592,4945}, {273725,4947}, {273728,4947}, {273730,4947}, {274094,4953}, {274100,4954}, {274102,4954}, {274103,4954}, {274104,4954}, {274105,4954},
-  {274106,4954}, {274107,4954}, {274108,4954}, {274142,4956}, {274146,4956}, {274157,4958}, {274159,4958}, {274160,4958}, {274161,4958}, {274172,4960},
-  {274198,4961}, {274199,4961}, {274200,4961}, {274240,4964}, {274241,4964}, {274243,4964}, {274244,4964}, {274250,4965}, {274251,4965}, {274282,4976}, 
-  {274283,4976}, {274284,4976}, {274285,4976}, {274286,4976}, {274314,4979}, {274315,4979}, {274316,4979}, {274317,4979}, {274318,4979}, {274319,4979},
-  {274335,4980}, {274336,4980}, {274337,4980}, {274338,4980}, {274339,4980}, {274344,4980}, {274345,4980}, {274382,4984}, {274387,4895}, {274388,4895},
-  {274420,4988}, {274421,4988}, {274422,4988}, {274440,4990}, {274441,4990}, {274442,4990}, {274443,4990}
-};
-
-const unsigned int Nrun=fillmap.size();
-vector<unsigned int> run;
-
 int Ethres[4]={fc_thresh.Atoi(),100000,100001,100002};
-//int Ethres[4]={50,100,150,200};
-
-int HistColor[4]={kBlack,kRed,kBlue,kGreen};
-bool DoNorm=false;
 
 // Macro
 void HFTiming(){ 
@@ -81,6 +58,14 @@ void HFTiming(){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_273150_273730/*.root");    
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274094_274250/*.root");    
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274282_274443/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_274954_275127/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016B-v2_RAW_DCS_275282_275376/*.root");    
+    }
+    else if(runset=="Run2016C"){
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016C-v2_RAW_DCS_275656_276283/*.root");    
+    }
+    else if(runset=="Run2016D"){
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016D-v2_RAW_DCS_276315_276582/*.root");    
     }
   }
   else if(dataset=="JetHT"){
@@ -105,6 +90,9 @@ void HFTiming(){
     cout<<"\n[HF Timing] Saving plots to "<<outdir<<"\n"<<endl;
 
   //Analysis
+  map<unsigned int, int> fillmap = getFillMap(runset);
+
+  vector<unsigned int> run;
   for(map<unsigned int,int>::iterator imap=fillmap.begin(); imap!=fillmap.end(); ++imap) //Fill run vector with analysis runs
     run.push_back((*imap).first);
 
@@ -127,7 +115,15 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
   
   init_chain(ch);
 
+  
+  //Full run vector with analysis runs (same as done above)
+  vector<unsigned int> run;
+  for(map<unsigned int,vector<int> >::iterator imap=selectedBXs.begin(); imap!=selectedBXs.end(); ++imap)
+    run.push_back((*imap).first);
+  const unsigned int Nrun=selectedBXs.size();
+
   // histograms
+  int HistColor[4]={kBlack,kRed,kBlue,kGreen};
   TH1F *h1[Nrun][4], *h2[Nrun][4], *h12[Nrun][4], *h2over12[Nrun][4], *ht[Nrun][4], *h1over2[Nrun][4], *havgtime[Nrun][4]; 
   TProfile *h2profile[Nrun][4], *hshape[Nrun][4];
 
@@ -235,22 +231,20 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     } //for(unsigned int ich=0; ich<HFDigiSubdet_->size(); ich++)
   } //for(unsigned int ievent = 0; ievent<nentries; ievent++)
 
-   
-    // Draw 
-  if(DoNorm){
-    for(unsigned int irun=0; irun<Nrun; irun++){ 
-      for(int i=0; i<4; i++){ 
-	h1[irun][i]->Scale(1./h1[irun][i]->Integral());
-	h2[irun][i]->Scale(1./h2[irun][i]->Integral());
-	h12[irun][i]->Scale(1./h12[irun][i]->Integral());
-	h1over2[irun][i]->Scale(1./h1over2[irun][i]->Integral());
-	h2over12[irun][i]->Scale(1./h2over12[irun][i]->Integral());
-	havgtime[irun][i]->Scale(1./havgtime[irun][i]->Integral());
-	hshape[irun][i]->Scale(1./hshape[irun][i]->Integral());
-      }
+  
+  // Draw 
+  for(unsigned int irun=0; irun<Nrun; irun++){ 
+    for(int i=0; i<4; i++){ 
+      h1[irun][i]->Scale(1./h1[irun][i]->Integral());
+      h2[irun][i]->Scale(1./h2[irun][i]->Integral());
+      h12[irun][i]->Scale(1./h12[irun][i]->Integral());
+      h1over2[irun][i]->Scale(1./h1over2[irun][i]->Integral());
+      h2over12[irun][i]->Scale(1./h2over12[irun][i]->Integral());
+      havgtime[irun][i]->Scale(1./havgtime[irun][i]->Integral());
+      hshape[irun][i]->Scale(1./hshape[irun][i]->Integral());
     }
   }
-
+  
   TLatex *tex_RUN = new TLatex(0.4,0.85,Form("Run number = %i", run_));
   tex_RUN->SetNDC();
   tex_RUN->SetTextSize(0.04);
@@ -341,7 +335,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
       hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
       hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
     }
-    hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
+    if(irun%2) hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
     hsummary->GetXaxis()->SetLabelSize(0.06);  
     hsummary->GetXaxis()->LabelsOption("v");
     hsummary->GetYaxis()->SetTitle("<Q2/(Q1+Q2)>");
@@ -353,14 +347,14 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     
   } 
   gStyle->SetPadTickY(2);
-  TCanvas *csum = new TCanvas("csum", "csum", 1200, 400);
+  TCanvas *csum = new TCanvas("csum", "csum", 1600, 400);
   csum->cd(1);
   csum->SetGridy(1);
-  hsummary->SetMinimum(0);
-  hsummary->SetMaximum(1);
+  hsummary->SetMinimum(0.2);
+  hsummary->SetMaximum(0.8);
   hsummary->SetMarkerStyle(20);
   hsummary->SetMarkerSize(1);
-  hsummary->Draw("ep");
+  hsummary->Draw("e0");
   csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.png",IETA,IPHI,DEPTH));
   csum->Print(Form(outdir+"/Summary_IETA%i_IPHI%i_DEPTH%i.root",IETA,IPHI,DEPTH));
   
