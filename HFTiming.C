@@ -1,4 +1,4 @@
-// Requrires using output from github rep: RohanBhandari/Misc/findFillScheme.py
+// Requires using output from github rep: RohanBhandari/Misc/findFillScheme.py
 
 #include <algorithm> 
 #include <ctime>
@@ -35,7 +35,7 @@
 TString dataset = "ZeroBias";
 TString which_bx = "all"; //Choose "all","iso", "first", "middle", "last", or "noniso"
 TString fc_thresh = "100";
-TString runset = "Run2016C";
+TString runset = "Run2016E";
 bool doPUVeto = true;
 TString pu_fcthresh; //Is set below if doPUVeto true
 
@@ -66,6 +66,10 @@ void HFTiming(){
     }
     else if(runset=="Run2016D"){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016D-v2_RAW_DCS_276315_276582/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016D-v2_RAW_DCS_276583_276811/*.root");    
+    }
+    else if(runset=="Run2016E"){
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016E-v2_RAW_DCS_276831_276870/*.root");    
     }
   }
   else if(dataset=="JetHT"){
@@ -333,9 +337,9 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
   for(unsigned int irun=0; irun<Nrun; irun++){   
     if(h2over12[irun][0]->GetEntries()>=10){
       hsummary->SetBinContent(irun+1,h2over12[irun][0]->GetMean());
-      hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());  
+      hsummary->SetBinError(irun+1,h2over12[irun][0]->GetMeanError());     
     }
-    if(irun%2) hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
+    hsummary->GetXaxis()->SetBinLabel(irun+1,Form("%i",(run[irun]-270000)));  
     hsummary->GetXaxis()->SetLabelSize(0.06);  
     hsummary->GetXaxis()->LabelsOption("v");
     hsummary->GetYaxis()->SetTitle("<Q2/(Q1+Q2)>");
@@ -343,8 +347,7 @@ void HFTimingOne(map<unsigned int, vector<int> > selectedBXs, int TStoCheck = 2,
     hsummary->GetYaxis()->SetTitleOffset(0.8);
     hsummary->GetYaxis()->SetLabelSize(0.06);  
     hsummary->SetStats(0);
-    hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));
-    
+    hsummary->SetTitle(Form("iEta=%i, iPhi=%i, Depth=%i",IETA,IPHI,DEPTH));    
   } 
   gStyle->SetPadTickY(2);
   TCanvas *csum = new TCanvas("csum", "csum", 1600, 400);
