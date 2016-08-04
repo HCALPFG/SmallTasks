@@ -35,7 +35,7 @@
 TString dataset = "ZeroBias";
 TString which_bx = "all"; //Choose "all","iso", "first", "middle", "last", or "noniso"
 TString fc_thresh = "100";
-TString runset = "Run2016E";
+TString runset = "Run2016F";
 bool doPUVeto = true;
 TString pu_fcthresh; //Is set below if doPUVeto true
 
@@ -69,7 +69,11 @@ void HFTiming(){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016D-v2_RAW_DCS_276583_276811/*.root");    
     }
     else if(runset=="Run2016E"){
-      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016E-v2_RAW_DCS_276831_276870/*.root");    
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016E-v2_RAW_DCS_276831_276870/*.root");
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016E-v2_RAW_DCS_276935_277420/*.root");    
+    }
+    else if(runset=="Run2016F"){
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016F-v1_RAW_DCS_277932_278018/*.root");
     }
   }
   else if(dataset=="JetHT"){
