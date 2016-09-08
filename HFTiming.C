@@ -74,6 +74,12 @@ void HFTiming(){
     }
     else if(runset=="Run2016F"){
       ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016F-v1_RAW_DCS_277932_278018/*.root");
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016F-v1_RAW_DCS_278167_278240/*.root");
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016F-v1_RAW_DCS_278723_278808/*.root");
+    }
+    else if(runset=="Run2016G"){
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016G-v1_RAW_DCS_278820_279588/*.root");
+      ch->Add("~/Work/public/hcaltuples/2016/ZeroBias_Run2016G-v1_RAW_DCS_279653_279975/*.root");
     }
   }
   else if(dataset=="JetHT"){
